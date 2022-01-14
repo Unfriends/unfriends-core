@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "es6",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "declaration": true
+  },
+  "files": [
+    "index.ts",
+    "game.ts",
+    "back.ts"
+  ],
+  "include": [
+    "src/**/*.ts"
+  ]
+}
