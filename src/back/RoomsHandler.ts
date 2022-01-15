@@ -1,5 +1,10 @@
+import { Namespace } from "socket.io";
 import { Room } from "./entities/Room";
+import { GameSocket } from "./GameSocket";
 
+/**
+ * @description Manage list of rooms
+ */
 export class RoomsHandler {
     /**
      * Array containing all rooms

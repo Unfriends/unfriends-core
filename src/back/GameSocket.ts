@@ -1,93 +1,208 @@
-import { Server, Socket } from "socket.io";
-import { RoomsHandler } from "./RoomsHandler";
-import { instrument } from "@socket.io/admin-ui";
-import { createServer } from "http";
+import { Socket } from "socket.io";
+import { Room } from "./entities/Room";
+import { User } from "./entities/User";
+import { LeaveReason } from "./models/LeaveReason";
+import { RefuseReason } from "./models/RefuseReason";
+import { NamespaceSocket } from "./NamespaceSocket";
 
 
-export abstract class GameSocket {
-    private rooms = new RoomsHandler()
-    protected isMatchmakerUp = false
+interface Message {
+    user: any;
+    content: string;
+}
 
-    private server
+export abstract class GameSocket extends NamespaceSocket {
+    protected room: Room | undefined
+    protected messages: Message[] = [];
 
-    constructor(PORT: number, options?: { origin?: string[], debug?: boolean }) {
-        const httpServer = createServer();
+    attachRoom(room: Room) {
+        this.room = room
+    }
 
-        options = { origin: [], debug: false, ...options }
+    protected getRoom() {
+        if (this.room)
+            return this.room
+        throw new Error("Room is not attached")
+    }
 
+    /**
+     * All custom event for the game (and lobby, if you want to add events)
+     */
+    abstract registerCustomListeners(user: User): void;
+    /**
+     * Called a user left a game permanently (and will not come back)
+     */
+    abstract userLeftInGame(user: User): void;
+    /**
+     * Called when leader click on start button
+     */
+    abstract onStart(): void;
+    // abstract onFinish(): void;
 
-        this.server = new Server(httpServer, {
-            cors: {
-                origin: options.origin,
-                credentials: true
+    /**
+     * Setup a user socket when he join
+     * @param user User to setup
+     */
+    private setupUser(user: User) {
+        this.registerListeners(user);
+        this.registerCustomListeners(user);
+
+        // console.log("User is setup", user.getId(), user.getData());
+        // Message sent when user is setup. Confirm client that he can join room
+        user.emit("hello", this.getRoom().isGameStarted());
+    }
+
+    // EVENT RECEIVERS //
+
+    /**
+     * When namespace is ready
+     */
+    onCreate(): void { }
+
+    /**
+     * When a new user join the room
+     * @param user New user
+     */
+    async onJoin(user: User) {
+        console.log("First join");
+
+        // user.getData()
+        this.setupUser(user);
+        if (!this.getRoom().isGameStarted()) {
+            this.getRoom().addUser(user);
+            if (this.getRoom().getUsers().length === 1) {
+                this.getRoom().changeOptions({ leaderId: user.getId() });
+                // this.broadcastRoomOptions();
             }
-        });
+            //TODO: maybe wait elsewere
+            // setTimeout(() => {
+            //     this.broadcastUser(user);
+            // }, 250);
+        }
+    }
 
-        if (options.debug) {
+    /**
+     * When a user reconnect after a brutal leave
+     */
+    onReconnect(user: User): void {
+        console.log("Reconnect");
+        this.setupUser(user);
+    }
 
-            instrument(this.server, {
-                auth: false
-            });
-            let room = this.createRoom("debug")
-            console.log("Room debug: " + room.getId());
+    /**
+     * When a user reconnection seat expire
+     */
+    onReconnectExpired(user: User): void {
+        // this.removeAndBroadcastUser(user);
+        this.getRoom().removeUser(user)
+        if (this.getRoom().isGameStarted()) {
+            this.userLeftInGame(user);
+        }
+    }
 
+    /**
+     * When a user leave the room
+     * @param user Left user
+     * @param reason Left reason
+     */
+    onLeave(user: User, reason: LeaveReason): void {
+        console.log('user left');
+
+        if (reason === LeaveReason.Brutal || this.getRoom().isGameStarted()) {
+            this.waitForUserReconnection(user);
+        } else {
+            this.getRoom().removeUser(user)
+        }
+    }
+
+    /**
+     * When a client has been refused in room
+     * @param socket client socket
+     * @param reason refuse reason
+     */
+    onRefuse(socket: Socket, reason: RefuseReason): void {
+        switch (reason) {
+            case RefuseReason.ConnectedOnOtherRoom:
+                socket.emit("welcome", { error: "ConnectedOnOtherRoom" });
+                break;
+            case RefuseReason.ConnectedInThisRoomOnOtherTab:
+                socket.emit("welcome", { error: "ConnectedInThisRoomOnOtherTab" });
+                break;
+            default:
+                socket.emit("welcome", { error: `UnknowError ${RefuseReason.ConnectedOnOtherRoom}` });
+                break;
         }
 
-        httpServer.listen(PORT);
+        // if (reason === RefuseReason.RoomStarted) {
+        //     socket.emit("welcome", { error: "GameStarted" });
+        // }
+    }
 
+    /**
+     * When the room is destroyed
+     */
+    onDestroy(): void { }
 
+    protected getLobbyState() {
+        return { messages: this.messages, ...this.getRoom().getData() }
+    }
 
-        console.log("Waiting for matchmaker..");
-        this.server.of('/matchmaker').on("connection", (socket) => {
-            if (this.isMatchmakerUp) {
-                console.log("A matchmaker is already connected, but we can communicate with multiple instance, i guess");
-            }
+    abstract getGameConfig(): any
 
-            console.log("Matchmaker is connected");
-            this.isMatchmakerUp = true
+    // Setup
+    private registerListeners(user: User) {
 
-            socket.on('disconnect', data => {
-                console.log("Matchmaker has disconnected:", data);
-                this.isMatchmakerUp = false
-            })
+        // STATES SYNC
+        user.on("game:state", () => {
+            user.emit("game:state", null);
+        });
 
-            // On Events
+        user.on("lobby:state", () => {
+            user.emit("lobby:state", this.getLobbyState());
+        });
+        user.on("game:config", () => {
+            user.emit("game:config", this.getGameConfig());
+        });
 
-            socket.on('getRooms', (cb) => {
-                cb(this.rooms.getPublicRooms())
-            })
-
-            socket.on('createRoom', ({ name }, cb) => {
-                let room = this.createRoom(name)
-                cb(room.getId())
-            })
-
-            socket.on('removeRoom', (id, cb) => {
-                this.rooms.removeRoom(id)
-                cb(true)
-            })
-
-            // Emit
-
-            socket.emit('getRooms', this.rooms.getPublicRooms())
+        // LOBBY
+        user.on("lobby:send-message", (data) => {
+            console.log("lobby:send-message");
+        });
+        user.on("lobby:set-private", (isPrivate: boolean) => {
+            console.log("lobby:set-private");
+        });
+        user.on("lobby:kick", (userId: string) => {
+            console.log("lobby:kick");
+        });
+        user.on("lobby:give-lead", (userId: string) => {
+            console.log("lobby:give-lead");
+        });
+        user.on("lobby:start", () => {
+            this.onStart()
         });
     }
 
-    protected abstract setupListeners(socket: Socket): void;
 
-    protected createRoom(name: string) {
-        let room = this.rooms.createRoom(name)
-        // setup listeners
-        this.server.of(room.getId()).on('connection', (socket) => {
-            this.setupListeners(socket)
-        })
-        return room
+    // FUNCTIONS
+
+    addChatMessage(message: Message) {
+        this.messages.push(message);
     }
 
-    // public removeRoom(id: string) {
-    //     this.rooms.removeRoom(id)
-    //     this.io.emit('removeRoom', id)
+    // private removeAndBroadcastUser(user: User) {
+    //     let room = this.getRoom()
+    //     room.removeUser(user);
+    //     if (room.getUsers().length === 0) {
+    //         this.destroyNamespace();
+    //     } else {
+    //         this.broadcast("removeUser", user.getId());
+
+    //         if (room.getOptions()?.leaderId === user.getId()) {
+    //             room.setLeader(room.getUsers()[0].getId());
+    //         }
+
+    //         //   this.notifyRoomModified();
+    //     }
+    //     // this.onUserCountChanged(room.getUsers().length);
     // }
-
-
 }

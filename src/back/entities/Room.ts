@@ -1,3 +1,5 @@
+import { Namespace } from "socket.io";
+import { GameSocket } from "../GameSocket";
 import { RoomOptions } from "../models/RoomOptions";
 import { User } from "./User";
 
@@ -6,6 +8,7 @@ export class Room {
   private users: User[] = [];
   private gameStarted: boolean = false;
   private options: RoomOptions
+  private gameSocket: GameSocket | undefined
 
   constructor(
     name: string,
@@ -15,6 +18,17 @@ export class Room {
 
     // TODO DEFAULT VALUES, TO CHANGE IN FUTURE
     this.options = { name, maxPlayer: 8, private: false, ...options };
+  }
+
+  public attachSocket(gameSocket: GameSocket) {
+    this.gameSocket = gameSocket
+    this.gameSocket.attachRoom(this)
+  }
+
+  public getSocket() {
+    if (!this.gameSocket)
+      throw new Error("NOT POSSIBLE :)")
+    return this.gameSocket
   }
 
   /**

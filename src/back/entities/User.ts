@@ -7,6 +7,8 @@ export class User {
 
   constructor(private id: string) {
     this.id = id;
+    // TODO Fetch api to get data
+    this.setData({ pseudo: 'yohan' })
   }
 
   // public async fetchData() {
@@ -28,15 +30,16 @@ export class User {
     this.socket = socket;
   }
 
-  public getSocket() {
-    return this.socket;
+  public emit(event: string, params?: any) {
+    if (!this.socket)
+      throw new Error(`User socket is not defined on (emit) event`)
+    this.socket.emit(event, params)
   }
 
-  public emitMessage(name: string, data?: any) {
-    if (this.socket)
-      this.socket.emit(name, data);
-    else
-      throw new Error(`User socket is not defined. on emitMessage. event name: ${name} data: ${data}`)
+  public on(event: string, callback: (...args: any[]) => void) {
+    if (!this.socket)
+      throw new Error(`User socket is not defined on (on) event`)
+    this.socket.on(event, callback)
   }
 
   public getData() {
@@ -47,6 +50,7 @@ export class User {
 
     return {
       connected: this.socket.connected,
+      id: this.getId(),
       ...this.data,
     };
   }

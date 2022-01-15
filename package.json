@@ -16,7 +16,12 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
+    "@angular/core": "^13.1.2",
+    "@angular/router": "^13.1.2",
     "@socket.io/admin-ui": "^0.2.0",
+    "jwt-decode": "^3.1.2",
+    "ngx-socket-io": "^4.1.0",
+    "rxjs": "^7.5.2",
     "socket.io": "^4.4.1"
   }
 }
