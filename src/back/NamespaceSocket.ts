@@ -33,10 +33,12 @@ export abstract class NamespaceSocket {
                 } else {
                     user = new User(userId);
                     user.setSocket(client);
+                    // fetch user data here
+                    await user.fetchData()
                     this.onJoin(user);
                 }
 
-                console.log("Connect user " + userId + " in room " + this.getId());
+                // console.log("Connect user " + userId + " in room " + this.getId());
 
                 client.on("disconnect", (data) => {
                     if (data === "client namespace disconnect") {

@@ -1,22 +1,24 @@
 import { Socket } from "socket.io";
 import { PlayerData } from "../models/PlayerData";
+import axios from "axios";
 
 export class User {
   private socket: Socket | undefined;
-  private data: PlayerData | undefined;
+  protected data: PlayerData | undefined;
 
   constructor(private id: string) {
     this.id = id;
-    // TODO Fetch api to get data
-    this.setData({ pseudo: 'yohan' })
   }
 
-  // public async fetchData() {
-  //   // http://localhost:5001/api/user/infos/
-  //   return axios.get("https://unfriend-api.yohangastoud.fr/api/user/infos/" + this.id).then((res) => {
-  //     this.data = res.data;
-  //   })
-  // }
+  public async fetchData() {
+    // http://localhost:5001/api/user/infos/
+    return axios.get("https://unfriend-api.yohangastoud.fr/api/user/infos/" + this.id).then((res: any) => {
+      this.data = res.data;
+    }).catch(err => {
+      console.error("API Unreachable. Set fake data");
+      this.data = { pseudo: "not found" }
+    })
+  }
 
   public setData(data: PlayerData) {
     this.data = data

@@ -12,9 +12,13 @@ export class Room {
 
   constructor(
     name: string,
-    options?: RoomOptions
+    options?: Partial<RoomOptions>,
+    forceId?: string
   ) {
-    this.id = Math.random().toString(36).substr(2, 9).toUpperCase();
+    if (forceId)
+      this.id = forceId
+    else
+      this.id = Math.random().toString(36).substr(2, 9).toUpperCase();
 
     // TODO DEFAULT VALUES, TO CHANGE IN FUTURE
     this.options = { name, maxPlayer: 8, private: false, ...options };
@@ -71,6 +75,10 @@ export class Room {
     this.options.leaderId = userId
   }
 
+  public getLeaderId() {
+    return this.options.leaderId
+  }
+
   /**
    * Get room name
    */
@@ -116,13 +124,13 @@ export class Room {
 
   /**
    * Remove a user from room
-   * @param userId User ID to add
+   * @param userId User ID to remove
    */
-  public removeUser(user: User) {
-    if (!this.isUserPresent(user.getId())) {
-      throw new Error(`Try to remove a user not present in room. UserID: ${user.getId()}, roomId: ${this.getId()}`)
+  public removeUser(userId: string) {
+    if (!this.isUserPresent(userId)) {
+      throw new Error(`Try to remove a user not present in room. UserID: ${userId}, roomId: ${this.getId()}`)
     } else {
-      this.users = this.users.filter((u) => u.getId() !== user.getId());
+      this.users = this.users.filter((u) => u.getId() !== userId);
     }
   }
 

@@ -1,4 +1,5 @@
-import { Socket } from "socket.io";
+import { Namespace, Socket } from "socket.io";
+import { Bot } from "./entities/Bot";
 import { Room } from "./entities/Room";
 import { User } from "./entities/User";
 import { LeaveReason } from "./models/LeaveReason";
@@ -14,6 +15,13 @@ interface Message {
 export abstract class GameSocket extends NamespaceSocket {
     protected room: Room | undefined
     protected messages: Message[] = [];
+    private oldLobbyState: any = []
+
+    constructor(namespace: Namespace) {
+        super(namespace)
+        this.autoSyncStates(1000)
+
+    }
 
     attachRoom(room: Room) {
         this.room = room
@@ -70,7 +78,7 @@ export abstract class GameSocket extends NamespaceSocket {
         this.setupUser(user);
         if (!this.getRoom().isGameStarted()) {
             this.getRoom().addUser(user);
-            if (this.getRoom().getUsers().length === 1) {
+            if (!this.getRoom().getLeaderId()) {
                 this.getRoom().changeOptions({ leaderId: user.getId() });
                 // this.broadcastRoomOptions();
             }
@@ -94,7 +102,7 @@ export abstract class GameSocket extends NamespaceSocket {
      */
     onReconnectExpired(user: User): void {
         // this.removeAndBroadcastUser(user);
-        this.getRoom().removeUser(user)
+        this.getRoom().removeUser(user.getId())
         if (this.getRoom().isGameStarted()) {
             this.userLeftInGame(user);
         }
@@ -111,7 +119,7 @@ export abstract class GameSocket extends NamespaceSocket {
         if (reason === LeaveReason.Brutal || this.getRoom().isGameStarted()) {
             this.waitForUserReconnection(user);
         } else {
-            this.getRoom().removeUser(user)
+            this.getRoom().removeUser(user.getId())
         }
     }
 
@@ -143,18 +151,33 @@ export abstract class GameSocket extends NamespaceSocket {
      */
     onDestroy(): void { }
 
+    // TODO Find a way to only send modified state
+    private autoSyncStates(interval: number) {
+        setInterval(() => {
+            let state = this.getLobbyState()
+            this.oldLobbyState = state
+        }, interval)
+
+    }
+
     protected getLobbyState() {
         return { messages: this.messages, ...this.getRoom().getData() }
     }
 
     abstract getGameConfig(): any
+    abstract getGameState(): any
+
+    private broadcastModifiedGameState(state: Partial<any>) {
+        this.broadcast("game:state", state);
+    }
 
     // Setup
     private registerListeners(user: User) {
 
         // STATES SYNC
+        // TODO Automatise sync
         user.on("game:state", () => {
-            user.emit("game:state", null);
+            user.emit("game:state", this.getGameState());
         });
 
         user.on("lobby:state", () => {
@@ -165,20 +188,35 @@ export abstract class GameSocket extends NamespaceSocket {
         });
 
         // LOBBY
-        user.on("lobby:send-message", (data) => {
-            console.log("lobby:send-message");
+        user.on("lobby:send-message", (msg: string) => {
+            console.log("lobby:send-message", msg);
+            this.messages.push({
+                content: msg,
+                user: user.getData()
+            })
         });
         user.on("lobby:set-private", (isPrivate: boolean) => {
-            console.log("lobby:set-private");
+            if (this.room && this.room.getLeaderId() === user.getId()) {
+                console.log("lobby:set-private", isPrivate);
+                this.room.changeOptions({ private: isPrivate })
+            }
         });
         user.on("lobby:kick", (userId: string) => {
-            console.log("lobby:kick");
+            if (this.room && this.room.getLeaderId() === user.getId()) {
+                console.log("lobby:kick", userId);
+                this.room.removeUser(userId)
+            }
         });
         user.on("lobby:give-lead", (userId: string) => {
-            console.log("lobby:give-lead");
+            if (this.room && this.room.getLeaderId() === user.getId()) {
+                console.log("lobby:give-lead", userId);
+                this.room.setLeader(userId)
+            }
         });
         user.on("lobby:start", () => {
-            this.onStart()
+            if (this.room && this.room.getLeaderId() === user.getId()) {
+                this.onStart()
+            }
         });
     }
 

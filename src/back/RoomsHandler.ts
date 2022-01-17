@@ -25,8 +25,8 @@ export class RoomsHandler {
      * Create and add a room to the list of all rooms
      * @param name Name of the room
      */
-    public createRoom(name: string): Room {
-        let room: Room = new Room(name);
+    public createRoom(name: string, forceId?: string): Room {
+        let room: Room = new Room(name, {}, forceId);
         this.rooms.push(room);
         return room;
     }

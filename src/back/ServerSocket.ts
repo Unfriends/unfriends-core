@@ -3,6 +3,7 @@ import { RoomsHandler } from "./RoomsHandler";
 import { instrument } from "@socket.io/admin-ui";
 import { createServer } from "http";
 import { GameSocket } from "./GameSocket";
+import { Bot } from "./entities/Bot";
 
 /**
  * Server socket is the global socket server.
@@ -29,8 +30,12 @@ export class ServerSocket {
             instrument(this.server, {
                 auth: false
             });
-            let room = this.createRoom("debug")
-            console.log("Room debug: " + room.getId());
+            let room = this.createRoom("debug", "debug")
+            console.log("Room debug initialize. access it with /debug");
+
+            for (let i = 0; i < 4; i++) {
+                room.addUser(new Bot("bot-" + i))
+            }
         }
         httpServer.listen(PORT);
 
@@ -73,8 +78,8 @@ export class ServerSocket {
         });
     }
 
-    protected createRoom(name: string) {
-        let room = this.rooms.createRoom(name)
+    protected createRoom(name: string, forceId?: string) {
+        let room = this.rooms.createRoom(name, forceId)
         room.attachSocket(new this.gameSocketType(this.server.of(room.getId())))
         return room
     }
