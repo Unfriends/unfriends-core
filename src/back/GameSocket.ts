@@ -19,7 +19,7 @@ export abstract class GameSocket extends NamespaceSocket {
 
     constructor(namespace: Namespace) {
         super(namespace)
-        this.autoSyncStates(1000)
+        // this.autoSyncStates(1000)
 
     }
 
