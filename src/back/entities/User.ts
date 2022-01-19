@@ -10,13 +10,17 @@ export class User {
     this.id = id;
   }
 
+  /**
+   * Get user data from API, using id
+   * @returns empty Promise
+   */
   public async fetchData() {
     // http://localhost:5001/api/user/infos/
     return axios.get("https://unfriend-api.yohangastoud.fr/api/user/infos/" + this.id).then((res: any) => {
       this.data = res.data;
     }).catch(err => {
       console.error("API Unreachable. Set fake data");
-      this.data = { pseudo: "not found" }
+      this.data = { pseudo: "ApiIsDown" }
     })
   }
 

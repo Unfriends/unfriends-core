@@ -1,42 +1,47 @@
 import { Namespace, Socket } from "socket.io";
-import { Bot } from "./entities/Bot";
 import { Room } from "./entities/Room";
 import { User } from "./entities/User";
+import AuthMiddleware from "./middlewares/AuthMiddleware";
+import InRoomMiddleware from "./middlewares/InRoomMiddleware";
 import { LeaveReason } from "./models/LeaveReason";
 import { RefuseReason } from "./models/RefuseReason";
-import { NamespaceSocket } from "./NamespaceSocket";
-
+import rdiff from 'recursive-diff'
 
 interface Message {
     user: any;
     content: string;
 }
 
-export abstract class GameSocket extends NamespaceSocket {
-    protected room: Room | undefined
+export abstract class GameSocket {
+
+    private reconnectDelay: number = 4000;
+    private waitingUsers: { user: User; timeout: NodeJS.Timeout }[] = [];
+
     protected messages: Message[] = [];
-    private oldLobbyState: any = []
+    private oldLobbyState: any
+    private oldGameConfigState: any;
+    private oldGameState: any;
 
-    constructor(namespace: Namespace) {
-        super(namespace)
-        // this.autoSyncStates(1000)
 
-    }
-
-    attachRoom(room: Room) {
-        this.room = room
+    constructor(private namespace: Namespace, private room: Room) {
+        this.setupMiddlewares();
+        this.setupSocketListeners();
+        this.onCreate();
+        this.autoSyncStates(500)
     }
 
     protected getRoom() {
-        if (this.room)
-            return this.room
-        throw new Error("Room is not attached")
+        return this.room
     }
 
     /**
      * All custom event for the game (and lobby, if you want to add events)
      */
-    abstract registerCustomListeners(user: User): void;
+    abstract registerGameListeners(user: User): void;
+    /**
+     * All custom event for the game (and lobby, if you want to add events)
+     */
+    abstract registerLobbyListeners(user: User): void;
     /**
      * Called a user left a game permanently (and will not come back)
      */
@@ -48,12 +53,14 @@ export abstract class GameSocket extends NamespaceSocket {
     // abstract onFinish(): void;
 
     /**
-     * Setup a user socket when he join
+     * Setup a user socket when he join, or reconnect
      * @param user User to setup
      */
     private setupUser(user: User) {
         this.registerListeners(user);
-        this.registerCustomListeners(user);
+        // TODO register event only on converned state
+        this.registerGameListeners(user);
+        this.registerLobbyListeners(user);
 
         // console.log("User is setup", user.getId(), user.getData());
         // Message sent when user is setup. Confirm client that he can join room
@@ -71,8 +78,8 @@ export abstract class GameSocket extends NamespaceSocket {
      * When a new user join the room
      * @param user New user
      */
-    async onJoin(user: User) {
-        console.log("First join");
+    private async onJoin(user: User) {
+        // console.log("First join");
 
         // user.getData()
         this.setupUser(user);
@@ -80,27 +87,22 @@ export abstract class GameSocket extends NamespaceSocket {
             this.getRoom().addUser(user);
             if (!this.getRoom().getLeaderId()) {
                 this.getRoom().changeOptions({ leaderId: user.getId() });
-                // this.broadcastRoomOptions();
             }
-            //TODO: maybe wait elsewere
-            // setTimeout(() => {
-            //     this.broadcastUser(user);
-            // }, 250);
         }
     }
 
     /**
      * When a user reconnect after a brutal leave
      */
-    onReconnect(user: User): void {
-        console.log("Reconnect");
+    private onReconnect(user: User): void {
+        // console.log("Reconnect");
         this.setupUser(user);
     }
 
     /**
      * When a user reconnection seat expire
      */
-    onReconnectExpired(user: User): void {
+    private onReconnectExpired(user: User): void {
         // this.removeAndBroadcastUser(user);
         this.getRoom().removeUser(user.getId())
         if (this.getRoom().isGameStarted()) {
@@ -113,8 +115,8 @@ export abstract class GameSocket extends NamespaceSocket {
      * @param user Left user
      * @param reason Left reason
      */
-    onLeave(user: User, reason: LeaveReason): void {
-        console.log('user left');
+    private onLeave(user: User, reason: LeaveReason): void {
+        // console.log('user left');
 
         if (reason === LeaveReason.Brutal || this.getRoom().isGameStarted()) {
             this.waitForUserReconnection(user);
@@ -128,7 +130,7 @@ export abstract class GameSocket extends NamespaceSocket {
      * @param socket client socket
      * @param reason refuse reason
      */
-    onRefuse(socket: Socket, reason: RefuseReason): void {
+    private onRefuse(socket: Socket, reason: RefuseReason): void {
         switch (reason) {
             case RefuseReason.ConnectedOnOtherRoom:
                 socket.emit("welcome", { error: "ConnectedOnOtherRoom" });
@@ -137,7 +139,7 @@ export abstract class GameSocket extends NamespaceSocket {
                 socket.emit("welcome", { error: "ConnectedInThisRoomOnOtherTab" });
                 break;
             default:
-                socket.emit("welcome", { error: `UnknowError ${RefuseReason.ConnectedOnOtherRoom}` });
+                socket.emit("welcome", { error: `UnknowError ${reason}` });
                 break;
         }
 
@@ -154,10 +156,41 @@ export abstract class GameSocket extends NamespaceSocket {
     // TODO Find a way to only send modified state
     private autoSyncStates(interval: number) {
         setInterval(() => {
-            let state = this.getLobbyState()
-            this.oldLobbyState = state
+            this.checkLobbyUpdate()
+            this.checkGameConfigUpdate()
+            // this.checkGameStateUpdate()
         }, interval)
 
+    }
+
+    private checkGameConfigUpdate() {
+        let state = this.getGameConfig()
+
+        let diff = rdiff.getDiff(this.oldGameConfigState, state)
+        if (diff.length > 0) {
+            this.oldGameConfigState = JSON.parse(JSON.stringify(state));
+            this.broadcast("game:config:update", diff);
+        }
+    }
+
+    private checkGameStateUpdate() {
+        let state = this.getGameState()
+
+        let diff = rdiff.getDiff(this.oldGameState, state)
+        if (diff.length > 0) {
+            this.oldGameState = JSON.parse(JSON.stringify(state));
+            this.broadcast("game:state:update", diff);
+        }
+    }
+
+    private checkLobbyUpdate() {
+        let state = this.getLobbyState()
+
+        let diff = rdiff.getDiff(this.oldLobbyState, state)
+        if (diff.length > 0) {
+            this.oldLobbyState = JSON.parse(JSON.stringify(state));
+            this.broadcast("lobby:state:update", diff);
+        }
     }
 
     protected getLobbyState() {
@@ -167,15 +200,10 @@ export abstract class GameSocket extends NamespaceSocket {
     abstract getGameConfig(): any
     abstract getGameState(): any
 
-    private broadcastModifiedGameState(state: Partial<any>) {
-        this.broadcast("game:state", state);
-    }
-
     // Setup
     private registerListeners(user: User) {
 
         // STATES SYNC
-        // TODO Automatise sync
         user.on("game:state", () => {
             user.emit("game:state", this.getGameState());
         });
@@ -243,4 +271,109 @@ export abstract class GameSocket extends NamespaceSocket {
     //     }
     //     // this.onUserCountChanged(room.getUsers().length);
     // }
+
+    /**
+     * Setup room event
+     */
+    private setupSocketListeners() {
+        this.namespace.on("connection", async (client: Socket) => {
+            if (!client.data.refused) {
+                let userId: string = client.data.userId;
+                let user: User;
+
+                if (this.isWaitingForReconnection(userId)) {
+                    user = this.getAndRemoveWaitingUser(userId);
+                    user.setSocket(client);
+                    this.onReconnect(user);
+                } else {
+                    user = new User(userId);
+                    user.setSocket(client);
+                    await user.fetchData()
+                    this.onJoin(user);
+                }
+
+                // console.log("Connect user " + userId + " in room " + this.getId());
+
+                client.on("disconnect", (data) => {
+                    if (data === "client namespace disconnect") {
+                        this.onLeave(user, LeaveReason.Left);
+                    } else if (data === "transport close") {
+                        this.onLeave(user, LeaveReason.Brutal);
+                    } else {
+                        console.error("Unknow left reason ! ", data);
+                        this.onLeave(user, LeaveReason.Unknow);
+                    }
+                });
+            } else {
+                console.log("Client refused");
+            }
+        });
+    }
+
+    // abstract onCreate(): void;
+    // abstract onReconnect(user: User): void;
+    // abstract onReconnectExpired(user: User): void;
+    // abstract onJoin(user: User): void;
+    // abstract onLeave(user: User, leaveReason: LeaveReason): void;
+    // abstract onRefuse(socket: Socket, refuseReason: RefuseReason): void;
+    // abstract onDestroy(): void;
+
+    // GETTERS / SETTERS
+
+    public getId() {
+        return this.namespace.name;
+    }
+
+    public setReconnectDelay(delay: number) {
+        this.reconnectDelay = delay;
+    }
+
+
+    protected waitForUserReconnection(user: User) {
+        let timeout = setTimeout(() => {
+            this.getAndRemoveWaitingUser(user.getId());
+            this.onReconnectExpired(user);
+        }, this.reconnectDelay);
+        this.waitingUsers.push({ user, timeout });
+    }
+
+    private getAndRemoveWaitingUser(id: string): User {
+        let seat = this.waitingUsers.filter((user) => user.user.getId() === id)[0];
+        this.waitingUsers = this.waitingUsers.filter(
+            (user) => user.user.getId() !== id
+        );
+
+        clearTimeout(seat.timeout);
+        return seat.user;
+    }
+
+    public isWaitingForReconnection(id: string) {
+        return this.waitingUsers.some((seat) => seat.user.getId() === id);
+    }
+
+    // Destroy namespace and free memory
+    public async destroyNamespace() {
+        // TODO
+        this.onDestroy();
+    }
+
+    /**
+     * Middlewares are used when user join the namespace
+     * Functions are executed once for each user
+     */
+    private setupMiddlewares() {
+        // TODO
+        // Is user auth ?
+        this.namespace.use(AuthMiddleware);
+
+        // Is user already in room ?
+        // this.namespace.use((socket: Socket, next: any) => {
+        //   InRoomMiddleware(socket, next, this);
+        // });
+    }
+
+    public broadcast(event: string, data?: any) {
+        this.namespace.emit(event, data);
+    }
+
 }

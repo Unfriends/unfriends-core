@@ -4,6 +4,7 @@ import { instrument } from "@socket.io/admin-ui";
 import { createServer } from "http";
 import { GameSocket } from "./GameSocket";
 import { Bot } from "./entities/Bot";
+import { Room } from "./entities/Room";
 
 /**
  * Server socket is the global socket server.
@@ -16,7 +17,7 @@ export class ServerSocket {
 
     private server: Server
 
-    constructor(private gameSocketType: new (namespace: Namespace) => GameSocket, PORT: number, options?: { origin?: string[], debug?: boolean }) {
+    constructor(private gameSocketType: new (namespace: Namespace, room: Room) => GameSocket, PORT: number, options?: { origin?: string[], debug?: boolean }) {
         // Setup IO server
         const httpServer = createServer();
         options = { origin: [], debug: false, ...options }
@@ -80,7 +81,7 @@ export class ServerSocket {
 
     protected createRoom(name: string, forceId?: string) {
         let room = this.rooms.createRoom(name, forceId)
-        room.attachSocket(new this.gameSocketType(this.server.of(room.getId())))
+        room.attachSocket(new this.gameSocketType(this.server.of(room.getId()), room))
         return room
     }
 

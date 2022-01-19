@@ -26,7 +26,6 @@ export class Room {
 
   public attachSocket(gameSocket: GameSocket) {
     this.gameSocket = gameSocket
-    this.gameSocket.attachRoom(this)
   }
 
   public getSocket() {
