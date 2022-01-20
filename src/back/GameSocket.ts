@@ -178,7 +178,7 @@ export abstract class GameSocket {
 
     private autoSyncStates(interval: number) {
         setInterval(() => {
-            if(this.getRoom().isGameStarted()){
+            if (this.getRoom().isGameStarted()) {
                 this.checkGameStateUpdate()
             } else {
                 this.checkGameConfigUpdate()
@@ -264,7 +264,9 @@ export abstract class GameSocket {
         // GAME
         user.on("game:start", () => {
             if (this.room.isUserAdmin(user)) {
+                this.getRoom().setGameStarted(true)
                 this.onStart()
+                this.broadcast('game:start')
             }
         });
     }
@@ -371,6 +373,10 @@ export abstract class GameSocket {
         // this.namespace.use((socket: Socket, next: any) => {
         //   InRoomMiddleware(socket, next, this);
         // });
+    }
+
+    protected stopGame(data?: any) {
+        this.broadcast('game:stop', data)
     }
 
     public broadcast(event: string, data?: any) {
