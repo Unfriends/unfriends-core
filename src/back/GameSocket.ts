@@ -244,23 +244,21 @@ export abstract class GameSocket {
         });
         user.on("lobby:set-private", (isPrivate: boolean) => {
             if (this.room.isUserAdmin(user)) {
-                console.log("lobby:set-private", isPrivate);
                 this.room.changeOptions({ private: isPrivate })
             }
         });
         user.on("lobby:kick", (userId: string) => {
             if (this.room.isUserAdmin(user)) {
-                console.log("lobby:kick", userId);
                 this.room.removeUser(userId)
             }
         });
         user.on("lobby:give-lead", (userId: string) => {
             if (this.room.isUserAdmin(user)) {
-                console.log("lobby:give-lead", userId);
                 this.room.setLeader(userId)
             }
         });
-        user.on("lobby:start", () => {
+        // GAME
+        user.on("game:start", () => {
             if (this.room.isUserAdmin(user)) {
                 this.onStart()
             }
