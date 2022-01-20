@@ -41,8 +41,24 @@ export class ServerSocket {
         httpServer.listen(PORT);
 
 
+        httpServer.on('error', (e: any) => {
+            if (e.code === 'EADDRINUSE') {
+              console.log(`Port ${PORT} in use, retrying...`);
+              setTimeout(() => {
+                httpServer.close();
+                httpServer.listen(PORT);
+              }, 5000);
+            } else {
+                console.log(e);
+            }
+          });
+
+          httpServer.on('listening', () => {
+            console.log(`Server listening on ${PORT}`);
+          });
+
+
         // Listen for matchmaker
-        console.log("Waiting for matchmaker..");
         this.server.of('/matchmaker').on("connection", (socket) => {
             // TODO add a middlewar, to verify if we're with a authorize matchmaker server
             if (this.isMatchmakerUp) {

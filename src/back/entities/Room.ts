@@ -30,7 +30,7 @@ export class Room {
 
   public getSocket() {
     if (!this.gameSocket)
-      throw new Error("NOT POSSIBLE :)")
+      throw new Error("GameSocket undefined. Should never append")
     return this.gameSocket
   }
 
@@ -140,5 +140,13 @@ export class Room {
    */
   public isUserPresent(userId: string) {
     return this.users.some((user) => user.getId() === userId);
+  }
+
+  /**
+   * @param user User to check
+   * @returns true if admin, else false
+   */
+  public isUserAdmin(user: User) {
+    return this.getLeaderId() === user.getId()
   }
 }

@@ -34,6 +34,14 @@ export abstract class GameSocket {
         return this.room
     }
 
+    public getId() {
+        return this.namespace.name;
+    }
+
+    public setReconnectDelay(delay: number) {
+        this.reconnectDelay = delay;
+    }
+
     /**
      * All custom event for the game (and lobby, if you want to add events)
      */
@@ -84,9 +92,13 @@ export abstract class GameSocket {
         // user.getData()
         this.setupUser(user);
         if (!this.getRoom().isGameStarted()) {
-            this.getRoom().addUser(user);
-            if (!this.getRoom().getLeaderId()) {
-                this.getRoom().changeOptions({ leaderId: user.getId() });
+            try {
+                this.getRoom().addUser(user);
+                if (!this.getRoom().getLeaderId()) {
+                    this.getRoom().changeOptions({ leaderId: user.getId() });
+                }
+            } catch (error) {
+                console.error(error);
             }
         }
     }
@@ -104,9 +116,13 @@ export abstract class GameSocket {
      */
     private onReconnectExpired(user: User): void {
         // this.removeAndBroadcastUser(user);
-        this.getRoom().removeUser(user.getId())
-        if (this.getRoom().isGameStarted()) {
-            this.userLeftInGame(user);
+        try {
+            this.getRoom().removeUser(user.getId())
+            if (this.getRoom().isGameStarted()) {
+                this.userLeftInGame(user);
+            }
+        } catch (error) {
+            console.error(error);
         }
     }
 
@@ -120,7 +136,11 @@ export abstract class GameSocket {
         if (reason === LeaveReason.Brutal || this.getRoom().isGameStarted()) {
             this.waitForUserReconnection(user);
         } else {
-            this.getRoom().removeUser(user.getId())
+            try {
+                this.getRoom().removeUser(user.getId())
+            } catch (error) {
+                console.error(error);
+            }
         }
     }
 
@@ -152,7 +172,6 @@ export abstract class GameSocket {
      */
     onDestroy(): void { }
 
-    // TODO Find a way to only send modified state
     private autoSyncStates(interval: number) {
         setInterval(() => {
             if(this.getRoom().isGameStarted()){
@@ -209,7 +228,6 @@ export abstract class GameSocket {
         user.on("game:state", () => {
             user.emit("game:state", this.getGameState());
         });
-
         user.on("lobby:state", () => {
             user.emit("lobby:state", this.getLobbyState());
         });
@@ -219,32 +237,31 @@ export abstract class GameSocket {
 
         // LOBBY
         user.on("lobby:send-message", (msg: string) => {
-            console.log("lobby:send-message", msg);
             this.messages.push({
                 content: msg,
                 user: user.getData()
             })
         });
         user.on("lobby:set-private", (isPrivate: boolean) => {
-            if (this.room && this.room.getLeaderId() === user.getId()) {
+            if (this.room.isUserAdmin(user)) {
                 console.log("lobby:set-private", isPrivate);
                 this.room.changeOptions({ private: isPrivate })
             }
         });
         user.on("lobby:kick", (userId: string) => {
-            if (this.room && this.room.getLeaderId() === user.getId()) {
+            if (this.room.isUserAdmin(user)) {
                 console.log("lobby:kick", userId);
                 this.room.removeUser(userId)
             }
         });
         user.on("lobby:give-lead", (userId: string) => {
-            if (this.room && this.room.getLeaderId() === user.getId()) {
+            if (this.room.isUserAdmin(user)) {
                 console.log("lobby:give-lead", userId);
                 this.room.setLeader(userId)
             }
         });
         user.on("lobby:start", () => {
-            if (this.room && this.room.getLeaderId() === user.getId()) {
+            if (this.room.isUserAdmin(user)) {
                 this.onStart()
             }
         });
@@ -252,10 +269,6 @@ export abstract class GameSocket {
 
 
     // FUNCTIONS
-
-    addChatMessage(message: Message) {
-        this.messages.push(message);
-    }
 
     // private removeAndBroadcastUser(user: User) {
     //     let room = this.getRoom()
@@ -312,23 +325,7 @@ export abstract class GameSocket {
         });
     }
 
-    // abstract onCreate(): void;
-    // abstract onReconnect(user: User): void;
-    // abstract onReconnectExpired(user: User): void;
-    // abstract onJoin(user: User): void;
-    // abstract onLeave(user: User, leaveReason: LeaveReason): void;
-    // abstract onRefuse(socket: Socket, refuseReason: RefuseReason): void;
-    // abstract onDestroy(): void;
 
-    // GETTERS / SETTERS
-
-    public getId() {
-        return this.namespace.name;
-    }
-
-    public setReconnectDelay(delay: number) {
-        this.reconnectDelay = delay;
-    }
 
 
     protected waitForUserReconnection(user: User) {
