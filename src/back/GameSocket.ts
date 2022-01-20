@@ -60,6 +60,8 @@ export abstract class GameSocket {
     abstract onStart(): void;
     // abstract onFinish(): void;
 
+    abstract onUserCountChanged(): void
+
     /**
      * Setup a user socket when he join, or reconnect
      * @param user User to setup
@@ -97,6 +99,7 @@ export abstract class GameSocket {
                 if (!this.getRoom().getLeaderId()) {
                     this.getRoom().changeOptions({ leaderId: user.getId() });
                 }
+                this.onUserCountChanged()
             } catch (error) {
                 console.error(error);
             }
@@ -138,6 +141,7 @@ export abstract class GameSocket {
         } else {
             try {
                 this.getRoom().removeUser(user.getId())
+                this.onUserCountChanged()
             } catch (error) {
                 console.error(error);
             }

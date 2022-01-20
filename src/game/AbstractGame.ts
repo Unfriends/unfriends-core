@@ -59,8 +59,7 @@ export abstract class AbstractGame<Configuration, GameState, Player extends Abst
 
     public start(players: Player[]) {
         for (const player of players) {
-            // TODO get player data somewhere
-            // this.players.set(player.getData().id, player)
+            this.players.set(player.getData().id, player)
         }
         this.initGame()
     }
