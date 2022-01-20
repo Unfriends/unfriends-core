@@ -5,7 +5,7 @@ import AuthMiddleware from "./middlewares/AuthMiddleware";
 import InRoomMiddleware from "./middlewares/InRoomMiddleware";
 import { LeaveReason } from "./models/LeaveReason";
 import { RefuseReason } from "./models/RefuseReason";
-import rdiff from 'recursive-diff'
+import * as rdiff from 'recursive-diff'
 
 interface Message {
     user: any;
@@ -117,7 +117,6 @@ export abstract class GameSocket {
      */
     private onLeave(user: User, reason: LeaveReason): void {
         // console.log('user left');
-
         if (reason === LeaveReason.Brutal || this.getRoom().isGameStarted()) {
             this.waitForUserReconnection(user);
         } else {
@@ -130,7 +129,7 @@ export abstract class GameSocket {
      * @param socket client socket
      * @param reason refuse reason
      */
-    private onRefuse(socket: Socket, reason: RefuseReason): void {
+    public onRefuse(socket: Socket, reason: RefuseReason): void {
         switch (reason) {
             case RefuseReason.ConnectedOnOtherRoom:
                 socket.emit("welcome", { error: "ConnectedOnOtherRoom" });
@@ -156,9 +155,12 @@ export abstract class GameSocket {
     // TODO Find a way to only send modified state
     private autoSyncStates(interval: number) {
         setInterval(() => {
-            this.checkLobbyUpdate()
-            this.checkGameConfigUpdate()
-            // this.checkGameStateUpdate()
+            if(this.getRoom().isGameStarted()){
+                this.checkGameStateUpdate()
+            } else {
+                this.checkGameConfigUpdate()
+                this.checkLobbyUpdate()
+            }
         }, interval)
 
     }
