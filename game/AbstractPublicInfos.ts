@@ -1,4 +1,4 @@
-import { PlayerData } from "../PlayerData";
+import { PlayerData } from "../utils/PlayerData";
 
 export interface AbstractPublicInfos {
     data: PlayerData

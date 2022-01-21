@@ -1,5 +1,5 @@
 {
-  "name": "@unfriend/core",
+  "name": "@unfriends/back",
   "version": "0.0.1",
   "description": "Necessary tools to develop on Unfriend",
   "main": "dist/index.js",
