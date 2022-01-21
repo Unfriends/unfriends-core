@@ -8,7 +8,7 @@ export class Bot extends User {
     }
 
     public async fetchData() {
-        this.setData({ pseudo: "Bot " + this.getId() })
+        this.setData({ pseudo: "Bot " + this.getId(), id: this.getId() })
     }
 
     public emit(event: string, params?: any) {
@@ -25,7 +25,6 @@ export class Bot extends User {
 
         return {
             connected: false,
-            id: this.getId(),
             ...this.data,
         };
     }

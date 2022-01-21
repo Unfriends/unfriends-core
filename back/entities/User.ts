@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { PlayerData } from "../models/PlayerData";
+import { PlayerData } from "@unfriends/utils";
 import axios from "axios";
 
 export class User {
@@ -20,7 +20,7 @@ export class User {
       this.data = res.data;
     }).catch(err => {
       console.error("API Unreachable. Set fake data");
-      this.data = { pseudo: "ApiIsDown" }
+      this.data = { pseudo: "ApiIsDown", id: this.id }
     })
   }
 
@@ -56,7 +56,6 @@ export class User {
 
     return {
       connected: this.socket.connected,
-      id: this.getId(),
       ...this.data,
     };
   }
