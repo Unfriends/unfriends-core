@@ -8,5 +8,5 @@
     "experimentalDecorators": true,
     "declaration": true
   },
-  "include": ["*.ts", "**/*.ts"]
+  "include": ["*.ts", "src/**/*.ts"]
 }

@@ -1,5 +1,5 @@
-export * from "./ServerSocket"
-export * from "./GameSocket"
+export * from "./src/ServerSocket"
+export * from "./src/GameSocket"
 
-export * from "./entities/Room"
-export * from "./entities/User"
+export * from "./src/entities/Room"
+export * from "./src/entities/User"

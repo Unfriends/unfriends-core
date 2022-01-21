@@ -1,3 +1,2 @@
-export * from "./AbstractGame"
-export * from "./AbstractPlayer"
-export * from "./AbstractPublicInfos"
+export * from "./src/AbstractGame"
+export * from "./src/AbstractPlayer"

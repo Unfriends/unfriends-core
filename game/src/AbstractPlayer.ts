@@ -1,4 +1,3 @@
-import { AbstractPublicInfos } from "./AbstractPublicInfos";
 import { PlayerData } from "@unfriends/utils";
 
 export abstract class AbstractPlayer {
