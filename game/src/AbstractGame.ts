@@ -1,29 +1,20 @@
 import { AbstractPlayer } from "./AbstractPlayer";
-import { AbstractPublicInfos } from "./AbstractPublicInfos";
 
 export abstract class AbstractGame<Configuration, GameState, Player extends AbstractPlayer> {
-    protected players: Map<string, Player> = new Map<string, Player>();
+    protected players: Player[] = []
     protected gameState: GameState | false = false
 
     constructor(protected configuration: Configuration) {
 
     }
 
-    // TODO: get config for players and getPlayerInfosFromId ?
-
-    // public addPlayer(player: Player) {
-    //     this.players.set(player.getData().id, player)
-    // }
-
-    // public removePlayer(id: string) {
-    //     this.players.delete(id)
-    // };
-
     public getPlayer(id: string): Player {
-        let player = this.players.get(id)
-        if (!player)
-            throw new Error(`Player not found: ${id}`)
-        return player
+        for (const player of this.players) {
+            if(player.getData().id === id){
+                return player
+            }
+        }
+        throw new Error(`Player not found: ${id}`)
     }
     /**
      * @description List of players present in game
@@ -38,7 +29,7 @@ export abstract class AbstractGame<Configuration, GameState, Player extends Abst
     public getPlayersInfos() {
         let infos = [];
         for (const player of this.players) {
-            infos.push(player[1].getPublicInfos());
+            infos.push(player.getPublicInfos());
         }
         return infos;
     }
@@ -48,19 +39,16 @@ export abstract class AbstractGame<Configuration, GameState, Player extends Abst
    * @param id Id of player
    */
     public getPlayerInfosFromId(id: string) {
-        let player: Player | undefined = this.players.get(id);
+        let player: Player = this.getPlayer(id);
         if (player != undefined) {
             return player.getPrivateInfos()
         }
-        throw new Error("Player id not found")
     }
 
     abstract isGameOver(): boolean
 
     public start(players: Player[]) {
-        for (const player of players) {
-            this.players.set(player.getData().id, player)
-        }
+        this.players = players
         this.initGame()
     }
     protected abstract stop(data?: any): void;

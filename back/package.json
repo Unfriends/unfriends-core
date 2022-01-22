@@ -1,27 +1,28 @@
 {
-  "name": "@unfriend/core",
+  "name": "@unfriends/back",
   "version": "0.0.1",
-  "description": "Necessary tools to develop on Unfriend",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "description": "Necessaries tools to develop on Unfriend Socket Server",
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com/Unfriends/unfriend-core"
+  },
   "scripts": {
     "build": "tsc",
     "prepare": "tsc"
   },
-  "keywords": [],
-  "author": "",
+  "author": "Yohan Gastoud",
   "license": "ISC",
   "devDependencies": {
     "ts-node": "^10.4.0",
+    "tsc": "^2.0.4",
     "typescript": "^4.5.4"
   },
   "dependencies": {
     "@socket.io/admin-ui": "^0.2.0",
-    "axios": "^0.24.0",
+    "@unfriends/utils": "0.0.1",
+    "axios": "^0.25.0",
     "jwt-decode": "^3.1.2",
-    "ngx-socket-io": "^4.1.0",
     "recursive-diff": "^1.0.8",
-    "rxjs": "^7.5.2",
     "socket.io": "^4.4.1"
   }
 }

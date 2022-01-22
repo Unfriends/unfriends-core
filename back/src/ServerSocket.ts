@@ -2,9 +2,8 @@ import { Namespace, Server, Socket } from "socket.io";
 import { RoomsHandler } from "./RoomsHandler";
 import { instrument } from "@socket.io/admin-ui";
 import { createServer } from "http";
-import { GameSocket } from "./GameSocket";
+import { Room, GameSocket } from "..";
 import { Bot } from "./entities/Bot";
-import { Room } from "./entities/Room";
 
 /**
  * Server socket is the global socket server.

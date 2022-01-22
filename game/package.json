@@ -1,0 +1,23 @@
+{
+  "name": "@unfriends/game",
+  "version": "0.0.1",
+  "description": "Necessaries tools to develop on Unfriends Games",
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com/Unfriends/unfriend-core"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc"
+  },
+  "author": "Yohan Gastoud",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "^10.4.0",
+    "tsc": "^2.0.4",
+    "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "@unfriends/utils": "0.0.1"
+  }
+}
