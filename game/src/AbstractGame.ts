@@ -22,16 +22,18 @@ export abstract class AbstractGame<Configuration, GameState, Player extends Abst
     public getPlayers() {
         return this.players;
     }
+    /**
+     * @description List of players private informations
+     */
+    public getPlayersPrivateInfos() {
+        return this.players.map(p => { return { id: p.getId(), infos: p.getPrivateInfos() } })
+    }
 
     /**
      * @description List of players public informations
      */
     public getPlayersInfos() {
-        let infos = [];
-        for (const player of this.players) {
-            infos.push(player.getPublicInfos());
-        }
-        return infos;
+        return this.players.map(p => { return { id: p.getId(), infos: p.getPublicInfos() } })
     }
 
     /**

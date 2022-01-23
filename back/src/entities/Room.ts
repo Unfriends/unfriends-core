@@ -93,7 +93,9 @@ export class Room {
   }
 
   public getUserFromId(id: string) {
-    return this.users.find(u => u.getId() === id)
+    let user = this.users.find(u => u.getId() === id)
+    if (!user) throw new Error(`User not found ${id}`)
+    return user
   }
 
   /**
