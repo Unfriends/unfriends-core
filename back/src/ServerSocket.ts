@@ -1,6 +1,5 @@
 import { Namespace, Server, Socket } from "socket.io";
 import { RoomsHandler } from "./RoomsHandler";
-import { instrument } from "@socket.io/admin-ui";
 import { createServer } from "http";
 import { Room, GameSocket } from "..";
 import { Bot } from "./entities/Bot";
@@ -27,9 +26,6 @@ export class ServerSocket {
             }
         });
         if (options.debug) {
-            instrument(this.server, {
-                auth: false
-            });
             let room = this.createRoom("debug", "debug")
             console.log("Room debug initialize. access it with /debug");
 
@@ -42,19 +38,19 @@ export class ServerSocket {
 
         httpServer.on('error', (e: any) => {
             if (e.code === 'EADDRINUSE') {
-              console.log(`Port ${PORT} in use, retrying...`);
-              setTimeout(() => {
-                httpServer.close();
-                httpServer.listen(PORT);
-              }, 5000);
+                console.log(`Port ${PORT} in use, retrying...`);
+                setTimeout(() => {
+                    httpServer.close();
+                    httpServer.listen(PORT);
+                }, 5000);
             } else {
                 console.log(e);
             }
-          });
+        });
 
-          httpServer.on('listening', () => {
+        httpServer.on('listening', () => {
             console.log(`Server listening on ${PORT}`);
-          });
+        });
 
 
         // Listen for matchmaker
