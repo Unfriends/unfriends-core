@@ -20,4 +20,8 @@ export abstract class AbstractPlayer {
     public getData() {
         return this.data
     }
+
+    public getId() {
+        return this.data.id
+    }
 }

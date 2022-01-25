@@ -21,6 +21,10 @@ export abstract class GameSocket {
     private oldLobbyState: any
     private oldGameConfigState: any;
     private oldGameState: any;
+    private oldPrivateInfos: {
+        id: string;
+        infos: any;
+    }[] | null = null
 
 
     constructor(private namespace: Namespace, private room: Room) {
@@ -178,8 +182,9 @@ export abstract class GameSocket {
 
     private autoSyncStates(interval: number) {
         setInterval(() => {
-            if(this.getRoom().isGameStarted()){
+            if (this.getRoom().isGameStarted()) {
                 this.checkGameStateUpdate()
+                this.checkPrivatesInfos()
             } else {
                 this.checkGameConfigUpdate()
                 this.checkLobbyUpdate()
@@ -188,8 +193,46 @@ export abstract class GameSocket {
 
     }
 
+    abstract getPrivateInfos(id: string): any;
+
+    abstract getAllPrivateInfos(): {
+        id: string;
+        infos: any;
+    }[];
+
+    private checkPrivatesInfos() {
+        let infos = this.getAllPrivateInfos()
+        if (!this.oldPrivateInfos)
+            this.oldPrivateInfos = infos
+
+
+        let changed = false
+        for (const info of infos) {
+            let oldPrivateInfo = this.oldPrivateInfos.find(i => i.id === info.id)
+            if (!oldPrivateInfo) throw new Error(`IMPOSSIBLE. Fuck it. Player has left game while playing ? ${info.id} not found`)
+            let diff = rdiff.getDiff(oldPrivateInfo, info)
+            console.log("COMPARE");
+
+            console.log(oldPrivateInfo);
+            console.log("------------------");
+            console.log(info);
+            console.log("------------------\n");
+
+            if (diff.length > 0) {
+                // this.emitToPlayer(info.id, 'game:private-infos:update', diff)
+                this.emitToPlayer(info.id, 'game:private-infos:update', info)
+                changed = true
+            }
+        }
+        if (changed)
+            this.oldPrivateInfos = JSON.parse(JSON.stringify(infos));
+    }
+
+
     private checkGameConfigUpdate() {
         let state = this.getGameConfig()
+        if (!this.oldGameConfigState)
+            this.oldGameConfigState = state
 
         let diff = rdiff.getDiff(this.oldGameConfigState, state)
         if (diff.length > 0) {
@@ -200,16 +243,20 @@ export abstract class GameSocket {
 
     private checkGameStateUpdate() {
         let state = this.getGameState()
+        if (!this.oldGameState)
+            this.oldGameState = state
 
         let diff = rdiff.getDiff(this.oldGameState, state)
         if (diff.length > 0) {
             this.oldGameState = JSON.parse(JSON.stringify(state));
-            this.broadcast("game:state:update", diff);
+            this.broadcast("game:state:update", state);
         }
     }
 
     private checkLobbyUpdate() {
         let state = this.getLobbyState()
+        if (!this.oldLobbyState)
+            this.oldLobbyState = state
 
         let diff = rdiff.getDiff(this.oldLobbyState, state)
         if (diff.length > 0) {
@@ -231,6 +278,9 @@ export abstract class GameSocket {
         // STATES SYNC
         user.on("game:state", () => {
             user.emit("game:state", this.getGameState());
+        });
+        user.on("game:private-infos", () => {
+            user.emit("game:private-infos", this.getPrivateInfos(user.getId()));
         });
         user.on("lobby:state", () => {
             user.emit("lobby:state", this.getLobbyState());
@@ -264,7 +314,9 @@ export abstract class GameSocket {
         // GAME
         user.on("game:start", () => {
             if (this.room.isUserAdmin(user)) {
+                this.getRoom().setGameStarted(true)
                 this.onStart()
+                this.broadcast('game:start')
             }
         });
     }
@@ -373,8 +425,16 @@ export abstract class GameSocket {
         // });
     }
 
+    protected stopGame(data?: any) {
+        this.broadcast('game:stop', data)
+    }
+
     public broadcast(event: string, data?: any) {
         this.namespace.emit(event, data);
+    }
+
+    public emitToPlayer(id: string, event: string, data?: any) {
+        this.room.getUserFromId(id).emit(event, data)
     }
 
 }

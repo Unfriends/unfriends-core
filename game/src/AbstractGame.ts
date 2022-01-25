@@ -10,7 +10,7 @@ export abstract class AbstractGame<Configuration, GameState, Player extends Abst
 
     public getPlayer(id: string): Player {
         for (const player of this.players) {
-            if(player.getData().id === id){
+            if (player.getData().id === id) {
                 return player
             }
         }
@@ -22,27 +22,26 @@ export abstract class AbstractGame<Configuration, GameState, Player extends Abst
     public getPlayers() {
         return this.players;
     }
-
     /**
-     * @description List of players public informations
-    */
-    public getPlayersInfos() {
-        let infos = [];
-        for (const player of this.players) {
-            infos.push(player.getPublicInfos());
-        }
-        return infos;
+     * @description List of players private informations
+     */
+    public getPlayersPrivateInfos() {
+        return this.players.map(p => { return { id: p.getId(), infos: p.getPrivateInfos() } })
     }
 
     /**
-   * @description Get private infos of a player
-   * @param id Id of player
-   */
-    public getPlayerInfosFromId(id: string) {
-        let player: Player = this.getPlayer(id);
-        if (player != undefined) {
-            return player.getPrivateInfos()
-        }
+     * @description List of players public informations
+     */
+    public getPlayersInfos() {
+        return this.players.map(p => { return { id: p.getId(), infos: p.getPublicInfos() } })
+    }
+
+    /**
+     * @description Get private infos of a player
+     * @param id Id of player
+     */
+    public getPlayerPrivateInfosFromId(id: string) {
+        return this.getPlayer(id).getPrivateInfos()
     }
 
     abstract isGameOver(): boolean
