@@ -31,7 +31,7 @@ export abstract class GameSocket {
         this.setupMiddlewares();
         this.setupSocketListeners();
         this.onCreate();
-        this.autoSyncStates(500)
+        this.autoSyncStates(100)
     }
 
     protected getRoom() {
@@ -73,7 +73,9 @@ export abstract class GameSocket {
     private setupUser(user: User) {
         this.registerListeners(user);
         // TODO register event only on converned state
+        // if (this.room.isGameStarted())
         this.registerGameListeners(user);
+        // else
         this.registerLobbyListeners(user);
 
         // console.log("User is setup", user.getId(), user.getData());
@@ -181,6 +183,7 @@ export abstract class GameSocket {
     onDestroy(): void { }
 
     private autoSyncStates(interval: number) {
+        // wait for game instance to be created
         setInterval(() => {
             if (this.getRoom().isGameStarted()) {
                 this.checkGameStateUpdate()
@@ -202,25 +205,19 @@ export abstract class GameSocket {
 
     private checkPrivatesInfos() {
         let infos = this.getAllPrivateInfos()
-        if (!this.oldPrivateInfos)
-            this.oldPrivateInfos = infos
-
+        if (!this.oldPrivateInfos) this.oldPrivateInfos = JSON.parse(JSON.stringify(this.getAllPrivateInfos()));
+        if (!this.oldPrivateInfos) return
 
         let changed = false
         for (const info of infos) {
-            let oldPrivateInfo = this.oldPrivateInfos.find(i => i.id === info.id)
-            if (!oldPrivateInfo) throw new Error(`IMPOSSIBLE. Fuck it. Player has left game while playing ? ${info.id} not found`)
+            let opi = this.oldPrivateInfos.find(i => i.id === info.id)
+            if (!opi) throw new Error(`IMPOSSIBLE. Fuck it. Player has left game while playing ? ${info.id} not found`)
+            let oldPrivateInfo = opi
             let diff = rdiff.getDiff(oldPrivateInfo, info)
-            console.log("COMPARE");
-
-            console.log(oldPrivateInfo);
-            console.log("------------------");
-            console.log(info);
-            console.log("------------------\n");
 
             if (diff.length > 0) {
                 // this.emitToPlayer(info.id, 'game:private-infos:update', diff)
-                this.emitToPlayer(info.id, 'game:private-infos:update', info)
+                this.emitToPlayer(info.id, 'game:private-infos:update', info.infos)
                 changed = true
             }
         }
@@ -231,8 +228,6 @@ export abstract class GameSocket {
 
     private checkGameConfigUpdate() {
         let state = this.getGameConfig()
-        if (!this.oldGameConfigState)
-            this.oldGameConfigState = state
 
         let diff = rdiff.getDiff(this.oldGameConfigState, state)
         if (diff.length > 0) {
@@ -243,8 +238,6 @@ export abstract class GameSocket {
 
     private checkGameStateUpdate() {
         let state = this.getGameState()
-        if (!this.oldGameState)
-            this.oldGameState = state
 
         let diff = rdiff.getDiff(this.oldGameState, state)
         if (diff.length > 0) {
@@ -255,8 +248,6 @@ export abstract class GameSocket {
 
     private checkLobbyUpdate() {
         let state = this.getLobbyState()
-        if (!this.oldLobbyState)
-            this.oldLobbyState = state
 
         let diff = rdiff.getDiff(this.oldLobbyState, state)
         if (diff.length > 0) {
