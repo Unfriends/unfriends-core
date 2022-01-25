@@ -1,10 +1,13 @@
 {
   "name": "@unfriends/game",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Necessaries tools to develop on Unfriends Games",
   "repository": {
     "type": "git",
-    "url": "ssh://git@github.com/Unfriends/unfriend-core"
+    "url": "git://github.com/Unfriends/unfriends-core.git"
+  },
+  "publishConfig": {
+    "registry":"https://npm.pkg.github.com"
   },
   "scripts": {
     "build": "tsc",

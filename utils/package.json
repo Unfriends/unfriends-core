@@ -1,10 +1,13 @@
 {
   "name": "@unfriends/utils",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Necessaries tools to develop on Unfriend",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/Unfriends/unfriend-core.git"
+    "url": "git://github.com/Unfriends/unfriends-core.git"
+  },
+  "publishConfig": {
+    "registry":"https://npm.pkg.github.com"
   },
   "scripts": {
     "build": "tsc",
