@@ -31,7 +31,7 @@ export abstract class GameSocket {
         this.setupMiddlewares();
         this.setupSocketListeners();
         this.onCreate();
-        this.autoSyncStates(100)
+        this.autoSyncStates(300)
     }
 
     protected getRoom() {
@@ -212,8 +212,7 @@ export abstract class GameSocket {
         for (const info of infos) {
             let opi = this.oldPrivateInfos.find(i => i.id === info.id)
             if (!opi) throw new Error(`IMPOSSIBLE. Fuck it. Player has left game while playing ? ${info.id} not found`)
-            let oldPrivateInfo = opi
-            let diff = rdiff.getDiff(oldPrivateInfo, info)
+            let diff = rdiff.getDiff(opi, info)
 
             if (diff.length > 0) {
                 // this.emitToPlayer(info.id, 'game:private-infos:update', diff)
