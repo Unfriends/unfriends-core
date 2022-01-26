@@ -231,7 +231,7 @@ export abstract class GameSocket {
         let diff = rdiff.getDiff(this.oldGameConfigState, state)
         if (diff.length > 0) {
             this.oldGameConfigState = JSON.parse(JSON.stringify(state));
-            this.broadcast("game:config:update", diff);
+            this.broadcast("game:config:update", state);
         }
     }
 
@@ -251,7 +251,7 @@ export abstract class GameSocket {
         let diff = rdiff.getDiff(this.oldLobbyState, state)
         if (diff.length > 0) {
             this.oldLobbyState = JSON.parse(JSON.stringify(state));
-            this.broadcast("lobby:state:update", diff);
+            this.broadcast("lobby:state:update", state);
         }
     }
 
