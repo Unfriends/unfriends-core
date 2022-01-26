@@ -36,7 +36,7 @@ export abstract class AbstractGame<Configuration, GameState, Player extends Abst
      */
     public getPlayer(id: string): Player {
         let player = this.players.find(p => p.getId() === id)
-        if(!player)
+        if (!player)
             throw new Error(`Player not found: ${id}`)
         return player
     }
