@@ -1,6 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Injectable, PLATFORM_ID } from '@angular/core';
+import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
 
 const API_URL = "api-url";
 const fakeJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWQiOiJmNWYxNmFkMS1lMTI2LTQ4ZjUtYjA0Ni0wNzljMzFjNzU3NWIiLCJpYXQiOjE1MTYyMzkwMjJ9._fRWQb5V9jkE4NCXUs6GimSOodScxSqWGQuZve4NEcA";
@@ -13,12 +13,12 @@ export class ApiService {
 
     constructor(
         private http: HttpClient,
-        /*  @Inject(PLATFORM_ID) private platformId: Object,
-         @Inject('environment') private environment: any */
+        @Inject(PLATFORM_ID) private platformId: Object,
+        @Inject('environment') private environment: any
     ) {
         // console.log("environment", environment);
 
-        if (/* isPlatformBrowser(this.platformId) */1)
+        if (isPlatformBrowser(this.platformId))
             this.jwt = localStorage.getItem('jwt');
 
         if (this.jwt) {

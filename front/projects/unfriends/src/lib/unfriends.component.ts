@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SocketService } from './socket.service';
@@ -15,7 +15,8 @@ export class UnfriendsComponent implements OnInit {
 
   private subs: Subscription = new Subscription();
   private id: string | undefined
-  constructor(private route: ActivatedRoute, private socketService: SocketService, private router: Router/* , @Inject('environment') private environment: any */) {
+  constructor(private route: ActivatedRoute, private socketService: SocketService, private router: Router, @Inject('environment') private environment: any) {
+    console.log(this.environment);
 
   }
 
@@ -43,7 +44,7 @@ export class UnfriendsComponent implements OnInit {
     this.route.params.subscribe((params) => {
       this.id = params['id'];
 
-      this.joinRoom(`${"this.environment.gameSocketUrl"}/${this.id}`);
+      this.joinRoom(`${this.environment.gameSocketUrl}/${this.id}`);
     });
   }
 
