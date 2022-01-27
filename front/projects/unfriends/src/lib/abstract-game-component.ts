@@ -18,11 +18,6 @@ export class AbstractGameComponent<GameState, Configuration> extends AbstractUnf
       .subscribe((data: any) => {
         this.onStopGame(data);
       });
-    let onGameStateSubscription = this.gameService
-      .onGameState()
-      .subscribe((data: any) => {
-        this.onGameState(data);
-      });
     let onGameStateChangedSubscription = this.gameService
       .onGameStateChanged()
       .subscribe((data: any) => {
@@ -33,39 +28,28 @@ export class AbstractGameComponent<GameState, Configuration> extends AbstractUnf
       .subscribe((data: any) => {
         this.onPrivateInfosChanged(data);
       });
-    let onPrivateInfosSubscription = this.gameService
-      .onPrivateInfos()
-      .subscribe((data: any) => {
-        this.onPrivateInfos(data);
-      });
+
 
     this.subs.add(onStopGameSubscription);
-    this.subs.add(onGameStateSubscription);
     this.subs.add(onGameStateChangedSubscription);
-    this.subs.add(onPrivateInfosSubscription);
     this.subs.add(onPrivateInfosChangedSubscription);
 
-    this.gameService.askGameState()
-    this.gameService.askPrivateInfos()
+    this.gameService.askGameState().then(state => {
+      this.game = state
+    })
+    this.gameService.askPrivateInfos().then(state => {
+      this.privateInfo = state
+    })
   }
 
   public onStopGame(data: any) {
     throw new Error('You need to override onStopGame method')
   }
 
-  private onGameState(data: any) {
-    console.log("onGameState", data);
-    this.game = data
-  }
-
   private onGameStateChanged(data: any) {
     if (!this.game) return
     this.game = data//rdiff.applyDiff(this.game, data)
     console.log("onGameStateChanged - new state", this.game);
-  }
-  private onPrivateInfos(data: any) {
-    console.log("onPrivateInfos", data);
-    this.privateInfo = data
   }
 
   private onPrivateInfosChanged(data: any) {

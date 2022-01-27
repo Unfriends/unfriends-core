@@ -19,9 +19,6 @@ export class AbstractLobbyComponent<Config> extends AbstractUnfriendComponent<Co
   game: Config | undefined
 
   ngOnInit() {
-    let onLobbyStateSubscription = this.gameService
-      .onLobbyState()
-      .subscribe(this.socketOnLobbyState);
     let onLobbyStateChangeSubscription = this.gameService
       .onLobbyStateChange()
       .subscribe(this.socketOnLobbyStateChange);
@@ -32,21 +29,17 @@ export class AbstractLobbyComponent<Config> extends AbstractUnfriendComponent<Co
       .onKick()
       .subscribe(this.socketOnKicked);
 
-    this.subs.add(onLobbyStateSubscription);
     this.subs.add(onLobbyStateChangeSubscription);
     this.subs.add(onKickedSubscription);
     this.subs.add(onGameStartSubscription);
 
 
-    this.gameService.askLobbyState()
+    this.gameService.askLobbyState().then(state => {
+      this.room = state
+    })
   }
 
   // EVENTS
-
-  private socketOnLobbyState = (state: any) => {
-    console.log("get socketOnLobbyState", state);
-    this.room = state
-  };
 
   private socketOnLobbyStateChange = (state: any) => {
     if (!this.room) return

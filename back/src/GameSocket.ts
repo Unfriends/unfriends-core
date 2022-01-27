@@ -47,11 +47,11 @@ export abstract class GameSocket {
     }
 
     /**
-     * All custom event for the game (and lobby, if you want to add events)
+     * All custom event for the game
      */
     abstract registerGameListeners(user: User): void;
     /**
-     * All custom event for the game (and lobby, if you want to add events)
+     * All custom event for the lobby
      */
     abstract registerLobbyListeners(user: User): void;
     /**
@@ -64,6 +64,9 @@ export abstract class GameSocket {
     abstract onStart(): void;
     // abstract onFinish(): void;
 
+    /**
+     * This function each time a user join or left the lobby. you can auto-set the game config here
+     */
     abstract onUserCountChanged(): void
 
     /**
@@ -266,17 +269,17 @@ export abstract class GameSocket {
     private registerListeners(user: User) {
 
         // STATES SYNC
-        user.on("game:state", () => {
-            user.emit("game:state", this.getGameState());
+        user.on("game:state", (callback) => {
+            callback(this.getGameState())
         });
-        user.on("game:private-infos", () => {
-            user.emit("game:private-infos", this.getPrivateInfos(user.getId()));
+        user.on("game:private-infos", (callback) => {
+            callback(this.getPrivateInfos(user.getId()))
         });
-        user.on("lobby:state", () => {
-            user.emit("lobby:state", this.getLobbyState());
+        user.on("lobby:state", (callback) => {
+            callback(this.getLobbyState())
         });
-        user.on("game:config", () => {
-            user.emit("game:config", this.getGameConfig());
+        user.on("game:config", (callback) => {
+            callback(this.getGameConfig())
         });
 
         // LOBBY

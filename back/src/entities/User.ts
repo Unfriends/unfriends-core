@@ -20,7 +20,7 @@ export class User {
       this.data = res.data;
     }).catch(err => {
       console.error("API Unreachable. Set fake data");
-      this.data = { pseudo: "ApiIsDown", id: this.id }
+      this.data = { pseudo: "User", id: this.id }
     })
   }
 

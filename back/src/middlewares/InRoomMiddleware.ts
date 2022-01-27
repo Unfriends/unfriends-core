@@ -3,6 +3,7 @@ import { RefuseReason } from "../models/RefuseReason";
 import { ServerSocket } from "../ServerSocket";
 
 /**
+ * Use to check if the user is already in a room
  */
 export default function InRoomMiddleware(
   socket: Socket,

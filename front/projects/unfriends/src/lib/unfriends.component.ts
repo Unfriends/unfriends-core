@@ -15,10 +15,7 @@ export class UnfriendsComponent implements OnInit, OnDestroy {
 
   private subs: Subscription = new Subscription();
   private id: string | undefined
-  constructor(private route: ActivatedRoute, private socketService: SocketService, private router: Router, @Inject('environment') private environment: any) {
-    console.log(this.environment);
-
-  }
+  constructor(private route: ActivatedRoute, private socketService: SocketService, private router: Router, @Inject('environment') private environment: any) { }
 
   private joinRoom(gameId: string) {
     let onSocketReadySubscription = this.socketService

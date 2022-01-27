@@ -92,6 +92,13 @@ export class Room {
     return this.users;
   }
 
+  /**
+   * Get formatted user to start a game
+   */
+  public getUsersForGame() {
+    return this.getUsers().map(p => p.getData())
+  }
+
   public getUserFromId(id: string) {
     let user = this.users.find(u => u.getId() === id)
     if (!user) throw new Error(`User not found ${id}`)

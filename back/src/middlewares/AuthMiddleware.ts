@@ -3,7 +3,7 @@ import { Socket } from "socket.io";
 
 /**
  * Middleware used to auth a user when he connect to a namespace
- * It verify the token (generated with the back_api) and retreive the user ID (from the token)
+ * It verify the token (generated with the api) and retreive the user ID (from the token)
  * User ID is injected in the socket (we can use socket.data.userId in further request to get user ID)
  */
 export default function AuthMiddleware(socket: Socket, next: any) {

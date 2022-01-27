@@ -20,108 +20,161 @@ export class GameService<Config> {
         this.socketService.getSocket().emit(event, data);
     }
 
-    // Events
+    // Unfriend defaults events Events
 
+    /**
+     * When the user is kicked from lobby
+     */
     public onKick(): Observable<any> {
-        return this.socketService.getSocket().fromEvent('lobby:kicked');
+        return this.on('lobby:kicked');
     }
 
-    public onLobbyMessage(): Observable<Message> {
-        return this.socketService.getSocket().fromEvent<Message>('lobby:message');
-    }
+    /*     public onLobbyMessage(): Observable<Message> {
+            return this.on<Message>('lobby:message');
+        } */
 
-    public onLobbyState() {
-        return this.socketService.getSocket().fromEvent<LobbyState<Config>>('lobby:state')
-    }
+    /*     public onLobbyState() {
+            return this.on<LobbyState<Config>>('lobby:state')
+        } */
 
     public onLobbyStateChange() {
-        return this.socketService.getSocket().fromEvent<State[]>('lobby:state:update')
+        return this.on<State[]>('lobby:state:update')
     }
 
-    public onAddUser(): Observable<User> {
-        return this.socketService.getSocket().fromEvent<User>('lobby:add-user');
-    }
+    /*     public onAddUser(): Observable<User> {
+            return this.on<User>('lobby:add-user');
+        } */
 
-    public onRemoveUser(): Observable<string> {
-        return this.socketService.getSocket().fromEvent<string>('lobby:remove-user');
-    }
+    /*     public onRemoveUser(): Observable<string> {
+            return this.on<string>('lobby:remove-user');
+        } */
 
-    public onGameConfig() {
-        return this.socketService.getSocket().fromEvent<Config>('game:config');
-    }
+    /*     public onGameConfig() {
+            return this.on<Config>('game:config');
+        } */
 
     public onGameConfigChanged() {
-        return this.socketService.getSocket().fromEvent<State[]>('game:config:update');
+        return this.on<State[]>('game:config:update');
     }
 
-    public onGameState() {
-        return this.socketService.getSocket().fromEvent<any>('game:state');
-    }
+    /*     public onGameState() {
+            return this.on<any>('game:state');
+        } */
 
     public onGameStateChanged() {
-        return this.socketService.getSocket().fromEvent<State[]>('game:state:update');
+        return this.on<State[]>('game:state:update');
     }
 
-    public onPrivateInfos() {
-        return this.socketService.getSocket().fromEvent<any>('game:private-infos');
-    }
+    /*     public onPrivateInfos() {
+            return this.on<any>('game:private-infos');
+        } */
 
     public onPrivateInfosChanged() {
-        return this.socketService.getSocket().fromEvent<State[]>('game:private-infos:update');
+        return this.on<State[]>('game:private-infos:update');
     }
 
     public onNotification() {
-        return this.socketService.getSocket().fromEvent<Config>('notification');
+        return this.on<Config>('notification');
     }
 
     public onStartGame() {
-        return this.socketService.getSocket().fromEvent<void>('game:start');
+        return this.on<void>('game:start');
     }
 
     public onStopGame() {
-        return this.socketService.getSocket().fromEvent<Config>('game:stop');
+        return this.on<Config>('game:stop');
     }
 
-    // Commands
+    // Admin Commands
 
+    /**
+     * User need to own the room
+     * @description Set the room private or public
+     */
     public setPrivate(isPrivate: boolean) {
-        this.socketService.getSocket().emit('lobby:set-private', isPrivate);
+        this.emit('lobby:set-private', isPrivate);
     }
 
+    /**
+     * @description Send a message in chat
+     */
     public emitSendMessage(message: string) {
-        this.socketService.getSocket().emit('lobby:send-message', message);
+        this.emit('lobby:send-message', message);
     }
 
+    /**
+     * User need to own the room
+     * @description Kick a player from the lobby
+     */
     public kickPlayer(userId: string) {
-        this.socketService.getSocket().emit('lobby:kick', userId);
+        this.emit('lobby:kick', userId);
     }
 
+    /**
+     * User need to own the room
+     * @description Give lobby leadership to a user
+     */
     public giveLeadership(userId: string) {
-        this.socketService.getSocket().emit('lobby:give-lead', userId);
+        this.emit('lobby:give-lead', userId);
     }
 
+    /**
+     * User need to own the room
+     * @description Go to game state
+     */
     public startGame() {
-        this.socketService.getSocket().emit('game:start');
+        this.emit('game:start');
     }
 
-    public askLobbyState() {
-        this.socketService.getSocket().emit('lobby:state')
+    /** 
+     * @description Get the state of the lobby (force refresh)
+     */
+    public askLobbyState(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.emit('lobby:state', (state: any) => {
+                resolve(state)
+            })
+        })
     }
 
-    public askGameConfig() {
-        this.socketService.getSocket().emit('game:config')
+    /** 
+     * @description Get the state of the game configuration (force refresh)
+     */
+    public askGameConfig(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.emit('game:config', (state: any) => {
+                resolve(state)
+            })
+        })
     }
 
-    public askGameState() {
-        this.socketService.getSocket().emit('game:state')
+    /** 
+     * @description Get the state of the game (force refresh)
+     */
+    public askGameState(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.emit('game:state', (state: any) => {
+                resolve(state)
+            })
+        })
     }
 
-    public askPrivateInfos() {
-        this.socketService.getSocket().emit('game:private-infos')
+    /** 
+     * @description Get the state of player private information (force refresh)
+     */
+    public askPrivateInfos(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.emit('game:private-infos', (state: any) => {
+                resolve(state)
+            })
+        })
     }
 
     // Functions
 
+    /** 
+     * @description Force the socket to disconnect
+     */
     public disconnect() {
         this.socketService.getSocket().disconnect();
     }

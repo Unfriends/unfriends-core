@@ -16,34 +16,25 @@ export class AbstractUnfriendComponent<Config> implements OnDestroy {
         protected route: ActivatedRoute,
         protected router: Router
     ) {
-        let onGameConfigSubscription = this.gameService
-            .onGameConfig()
-            .subscribe(this.socketOnGameConfig);
 
         let onGameConfigChangedSubscription = this.gameService
             .onGameConfigChanged()
             .subscribe(this.socketOnGameConfigChanged);
 
         this.subs.add(onGameConfigChangedSubscription);
-        this.subs.add(onGameConfigSubscription);
-
-        this.gameService.askGameConfig()
 
         this.route.params.subscribe((params) => {
             this.room_id = params['id'];
         });
 
-        // this.setupListeners();
+        this.gameService.askGameConfig().then(state => {
+            this.gameConfig = state
+        })
     }
 
     // protected abstract setupListeners(): void;
 
     // EVENTS
-
-    private socketOnGameConfig = (data: Config) => {
-        console.log("get socketOnGameConfig", data);
-        this.gameConfig = data
-    }
 
     private socketOnGameConfigChanged = (data: any) => {
         if (!this.gameConfig) return
