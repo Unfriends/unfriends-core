@@ -416,6 +416,7 @@ export abstract class GameSocket {
     }
 
     protected stopGame(data?: any) {
+        this.getRoom().setGameStarted(false)
         this.broadcast('game:stop', data)
     }
 

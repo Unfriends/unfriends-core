@@ -1,10 +1,10 @@
-import { Component } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { AbstractUnfriendComponent } from "./abstract-unfriend.component";
 import { Message } from "./entities/Message";
 import { RoomOptions } from "./entities/RoomOptions";
 
 @Component({ template: '' })
-export abstract class AbstractLobbyComponent<Config> extends AbstractUnfriendComponent<Config> {
+export class AbstractLobbyComponent<Config> extends AbstractUnfriendComponent<Config> implements OnInit {
   room: {
     id: string;
     users: {
@@ -18,7 +18,7 @@ export abstract class AbstractLobbyComponent<Config> extends AbstractUnfriendCom
 
   game: Config | undefined
 
-  setupListeners() {
+  ngOnInit() {
     let onLobbyStateSubscription = this.gameService
       .onLobbyState()
       .subscribe(this.socketOnLobbyState);

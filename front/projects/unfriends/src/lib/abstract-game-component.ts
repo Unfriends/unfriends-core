@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AbstractUnfriendComponent } from './abstract-unfriend.component';
 
 @Component({ template: '' })
-export abstract class AbstractGameComponent<GameState, Configuration> extends AbstractUnfriendComponent<Configuration> {
+export class AbstractGameComponent<GameState, Configuration> extends AbstractUnfriendComponent<Configuration> implements OnInit {
   game: GameState | undefined
   privateInfo: any
 
@@ -11,7 +11,8 @@ export abstract class AbstractGameComponent<GameState, Configuration> extends Ab
     return this.game
   }
 
-  setupListeners() {
+
+  ngOnInit() {
     let onStopGameSubscription = this.gameService
       .onStopGame()
       .subscribe((data: any) => {
@@ -48,7 +49,9 @@ export abstract class AbstractGameComponent<GameState, Configuration> extends Ab
     this.gameService.askPrivateInfos()
   }
 
-  abstract onStopGame(data: any): void;
+  public onStopGame(data: any) {
+    throw new Error('You need to override onStopGame method')
+  }
 
   private onGameState(data: any) {
     console.log("onGameState", data);

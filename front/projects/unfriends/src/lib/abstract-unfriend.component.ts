@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { Component, OnDestroy } from "@angular/core";
 
 @Component({ template: '' })
-export abstract class AbstractUnfriendComponent<Config> implements OnDestroy {
+export class AbstractUnfriendComponent<Config> implements OnDestroy {
     gameConfig: Config | undefined
     room_id: string = ""
 
@@ -33,10 +33,10 @@ export abstract class AbstractUnfriendComponent<Config> implements OnDestroy {
             this.room_id = params['id'];
         });
 
-        this.setupListeners();
+        // this.setupListeners();
     }
 
-    protected abstract setupListeners(): void;
+    // protected abstract setupListeners(): void;
 
     // EVENTS
 

@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SocketService } from './socket.service';
@@ -11,7 +11,7 @@ import { SocketService } from './socket.service';
   styles: [
   ]
 })
-export class UnfriendsComponent implements OnInit {
+export class UnfriendsComponent implements OnInit, OnDestroy {
 
   private subs: Subscription = new Subscription();
   private id: string | undefined
@@ -27,9 +27,9 @@ export class UnfriendsComponent implements OnInit {
         (started: any) => {
           onSocketReadySubscription.unsubscribe();
           if (started) {
-            this.router.navigate([`${this.id}/game`]);
+            this.router.navigate([this.id, 'game']);
           } else {
-            this.router.navigate([`${this.id}/lobby`]);
+            this.router.navigate([this.id, 'lobby']);
           }
         },
         (err) => {
@@ -43,7 +43,6 @@ export class UnfriendsComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       this.id = params['id'];
-
       this.joinRoom(`${this.environment.gameSocketUrl}/${this.id}`);
     });
   }
