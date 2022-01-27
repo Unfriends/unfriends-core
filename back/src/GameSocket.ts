@@ -306,13 +306,15 @@ export abstract class GameSocket {
         });
         // GAME
         user.on("game:start", () => {
-            if (this.room.isUserAdmin(user)) {
+            if (this.room.isUserAdmin(user) && this.canStart()) {
                 this.getRoom().setGameStarted(true)
                 this.onStart()
                 this.broadcast('game:start')
             }
         });
     }
+
+    abstract canStart(): boolean;
 
 
     // FUNCTIONS
@@ -373,7 +375,9 @@ export abstract class GameSocket {
     }
 
 
-
+    protected getUsers() {
+        return this.getRoom().getUsers()
+    }
 
     protected waitForUserReconnection(user: User) {
         let timeout = setTimeout(() => {

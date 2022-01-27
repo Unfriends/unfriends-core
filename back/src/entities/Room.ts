@@ -125,7 +125,10 @@ export class Room {
   public addUser(user: User) {
     if (this.isUserPresent(user.getId())) {
       throw new Error(`Try to add a user already present in room. UserID: ${user.getId()}, roomId: ${this.getId()}`);
-    } else {
+    } else if (this.getUsers().length + 1 > this.options.maxPlayer) {
+      throw new Error(`Room is full`);
+    }
+    else {
       this.users.push(user);
     }
   }
