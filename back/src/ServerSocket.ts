@@ -1,8 +1,9 @@
 import { Namespace, Server, Socket } from "socket.io";
 import { RoomsHandler } from "./RoomsHandler";
 import { createServer } from "http";
-import { Room, GameSocket } from "..";
 import { Bot } from "./entities/Bot";
+import { Newable } from "./newable.type";
+import { GameSocket } from "./GameSocket";
 
 /**
  * Server socket is the global socket server.
@@ -15,7 +16,7 @@ export class ServerSocket {
 
     private server: Server
 
-    constructor(private gameSocketType: new (namespace: Namespace, room: Room) => GameSocket, PORT: number, options?: { origin?: string[], debug?: boolean }) {
+    constructor(private gameSocketType: Newable<GameSocket<any>>, PORT: number, options?: { origin?: string[], debug?: boolean }) {
         // Setup IO server
         const httpServer = createServer();
         options = { origin: [], debug: false, ...options }
@@ -34,7 +35,6 @@ export class ServerSocket {
             }
         }
         httpServer.listen(PORT);
-
 
         httpServer.on('error', (e: any) => {
             if (e.code === 'EADDRINUSE') {

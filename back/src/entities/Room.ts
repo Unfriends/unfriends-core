@@ -8,7 +8,7 @@ export class Room {
   private users: User[] = [];
   private gameStarted: boolean = false;
   private options: RoomOptions
-  private gameSocket: GameSocket | undefined
+  private gameSocket: GameSocket<any> | undefined
 
   constructor(
     name: string,
@@ -24,7 +24,7 @@ export class Room {
     this.options = { name, maxPlayer: 8, private: false, ...options };
   }
 
-  public attachSocket(gameSocket: GameSocket) {
+  public attachSocket(gameSocket: GameSocket<any>) {
     this.gameSocket = gameSocket
   }
 

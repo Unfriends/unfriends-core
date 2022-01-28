@@ -6,13 +6,20 @@ import InRoomMiddleware from "./middlewares/InRoomMiddleware";
 import { LeaveReason } from "./models/LeaveReason";
 import { RefuseReason } from "./models/RefuseReason";
 import * as rdiff from 'recursive-diff'
+import { AbstractGame } from "@unfriends/game";
+import { Newable } from "./newable.type";
 
 interface Message {
     user: any;
     content: string;
 }
 
-export abstract class GameSocket {
+
+
+export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
+
+    private gameType: Newable<T> | null = null
+    private game: T | null = null
 
     private reconnectDelay: number = 4000;
     private waitingUsers: { user: User; timeout: NodeJS.Timeout }[] = [];
@@ -32,6 +39,26 @@ export abstract class GameSocket {
         this.setupSocketListeners();
         this.onCreate();
         this.autoSyncStates(300)
+
+    }
+
+    protected getGame() {
+        if (this.game)
+            return this.game
+        throw new Error("Game object is undefined - getGame")
+    }
+
+    protected setGame(gameType: Newable<T>) {
+        this.gameType = gameType
+        this.game = new this.gameType()
+    }
+
+    /**
+     * Create and replace game instance
+     */
+    protected resetGame() {
+        if (!this.gameType) throw new Error("Game is not assignated  - resetGame")
+        this.game = new this.gameType()
     }
 
     protected getRoom() {
@@ -91,7 +118,7 @@ export abstract class GameSocket {
     /**
      * When namespace is ready
      */
-    onCreate(): void { }
+    abstract onCreate(): void;
 
     /**
      * When a new user join the room
@@ -199,12 +226,14 @@ export abstract class GameSocket {
 
     }
 
-    abstract getPrivateInfos(id: string): any;
 
-    abstract getAllPrivateInfos(): {
-        id: string;
-        infos: any;
-    }[];
+
+    private getAllPrivateInfos() {
+        return this.getGame().getPlayersPrivateInfos()
+    }
+    private getPrivateInfos(id: string) {
+        return this.getGame().getPlayerPrivateInfosFromId(id)
+    }
 
     private checkPrivatesInfos() {
         let infos = this.getAllPrivateInfos()
@@ -258,12 +287,15 @@ export abstract class GameSocket {
         }
     }
 
-    protected getLobbyState() {
+    private getLobbyState() {
         return { messages: this.messages, ...this.getRoom().getData() }
     }
-
-    abstract getGameConfig(): any
-    abstract getGameState(): any
+    private getGameConfig() {
+        return this.game?.getConfiguration()
+    }
+    private getGameState() {
+        return this.game?.getState()
+    }
 
     // Setup
     private registerListeners(user: User) {
@@ -425,9 +457,17 @@ export abstract class GameSocket {
         // });
     }
 
+    /**
+     * @param data End game supplement datas. For instance, it can be the end game reason.
+     * These datas will be passed to the client on "onStopGame" event
+     * Leaderboard is also send as a supplement
+     */
     protected stopGame(data?: any) {
         this.getRoom().setGameStarted(false)
-        this.broadcast('game:stop', data)
+        this.broadcast('game:stop', { ...data, leaderboard: this.getGame().getLeaderboard() })
+
+        this.getGame().setConfiguration(this.getGame().getConfiguration())
+        this.resetGame()
     }
 
     public broadcast(event: string, data?: any) {
