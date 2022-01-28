@@ -19,12 +19,12 @@ interface Message {
 export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
 
     private gameType: Newable<T> | null = null
-    private game: T | null = null
+    private gameInstance: T | null = null
 
     private reconnectDelay: number = 4000;
     private waitingUsers: { user: User; timeout: NodeJS.Timeout }[] = [];
 
-    protected messages: Message[] = [];
+    private messages: Message[] = [];
     private oldLobbyState: any
     private oldGameConfigState: any;
     private oldGameState: any;
@@ -42,15 +42,15 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
 
     }
 
-    protected getGame() {
-        if (this.game)
-            return this.game
-        throw new Error("Game object is undefined - getGame")
+    protected get game(): T {
+        if (this.gameInstance)
+            return this.gameInstance
+        throw new Error("Game object is undefined - game")
     }
 
     protected setGame(gameType: Newable<T>) {
         this.gameType = gameType
-        this.game = new this.gameType()
+        this.gameInstance = new this.gameType()
     }
 
     /**
@@ -58,7 +58,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
      */
     protected resetGame() {
         if (!this.gameType) throw new Error("Game is not assignated  - resetGame")
-        this.game = new this.gameType()
+        this.gameInstance = new this.gameType()
     }
 
     protected getRoom() {
@@ -86,10 +86,15 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
      */
     abstract userLeftInGame(user: User): void;
     /**
-     * Called when leader click on start button
+     * Called when leader click on start button, afyer the game has been initialized
      */
     abstract onStart(): void;
     // abstract onFinish(): void;
+
+    private start() {
+        this.game.start(this.getRoom().getUsers().map(p => p.getData()))
+        this.onStart()
+    }
 
     /**
      * This function each time a user join or left the lobby. you can auto-set the game config here
@@ -229,10 +234,10 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
 
 
     private getAllPrivateInfos() {
-        return this.getGame().getPlayersPrivateInfos()
+        return this.game.getPlayersPrivateInfos()
     }
     private getPrivateInfos(id: string) {
-        return this.getGame().getPlayerPrivateInfosFromId(id)
+        return this.game.getPlayerPrivateInfosFromId(id)
     }
 
     private checkPrivatesInfos() {
@@ -340,7 +345,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         user.on("game:start", () => {
             if (this.room.isUserAdmin(user) && this.canStart()) {
                 this.getRoom().setGameStarted(true)
-                this.onStart()
+                this.start()
                 this.broadcast('game:start')
             }
         });
@@ -464,9 +469,9 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
      */
     protected stopGame(data?: any) {
         this.getRoom().setGameStarted(false)
-        this.broadcast('game:stop', { ...data, leaderboard: this.getGame().getLeaderboard() })
+        this.broadcast('game:stop', { ...data, leaderboard: this.game.getLeaderboard() })
 
-        this.getGame().setConfiguration(this.getGame().getConfiguration())
+        this.game.setConfiguration(this.game.getConfiguration())
         this.resetGame()
     }
 

@@ -1,10 +1,11 @@
+import { PlayerData } from "@unfriends/utils";
 import { AbstractPlayer } from "./AbstractPlayer";
-
+export type Newable<T> = { new(...args: any[]): T; };
 export abstract class AbstractGame<Configuration, GameState, Player extends AbstractPlayer> {
     protected players: Player[] = []
     protected gameState: GameState | false = false
 
-    constructor(protected configuration: Configuration) {
+    constructor(protected configuration: Configuration, protected playerType: Newable<Player>) {
         configuration = this.generateConfigAccordingToPlayers(2)
     }
 
@@ -72,8 +73,8 @@ export abstract class AbstractGame<Configuration, GameState, Player extends Abst
      * Call this method to start the game
      * @param players Player who will play
      */
-    public start(players: Player[]) {
-        this.players = players
+    public start(players: PlayerData[]) {
+        this.players = players.map(p => new this.playerType(p))
         this.onInitGame()
     }
 
