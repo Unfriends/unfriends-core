@@ -389,6 +389,9 @@ export abstract class GameSocket {
 
     private getAndRemoveWaitingUser(id: string): User {
         let seat = this.waitingUsers.filter((user) => user.user.getId() === id)[0];
+        if (!seat) {
+            throw new Error("Seat is undefined")
+        }
         this.waitingUsers = this.waitingUsers.filter(
             (user) => user.user.getId() !== id
         );
