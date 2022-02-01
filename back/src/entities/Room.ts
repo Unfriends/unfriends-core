@@ -24,11 +24,11 @@ export class Room {
     this.options = { name, maxPlayer: 8, private: false, ...options };
   }
 
-  public attachSocket(gameSocket: GameSocket<any>) {
+  public attachSocket (gameSocket: GameSocket<any>) {
     this.gameSocket = gameSocket
   }
 
-  public getSocket() {
+  public getSocket () {
     if (!this.gameSocket)
       throw new Error("GameSocket undefined. Should never append")
     return this.gameSocket
@@ -37,69 +37,69 @@ export class Room {
   /**
    * @description Is the room visible ?
    */
-  public isPrivate() {
+  public isPrivate () {
     return this.options?.private;
   }
 
   /**
    * @description Get the random generated ID of the room (Should be unique)
    */
-  public getId() {
+  public getId () {
     return this.id;
   }
 
   /**
    * @description True if we're in "game state", False if we're in lobby
    */
-  public isGameStarted() {
+  public isGameStarted () {
     return this.gameStarted;
   }
 
   /**
    * @description Set to true when the game is currently started
    */
-  public setGameStarted(start: boolean) {
+  public setGameStarted (start: boolean) {
     this.gameStarted = start;
   }
 
-  public getOptions() {
+  public getOptions () {
     return this.options;
   }
 
-  public changeOptions(options: Partial<RoomOptions>) {
+  public changeOptions (options: Partial<RoomOptions>) {
     this.options = { ...this.options, ...options };
   }
 
-  public setLeader(userId: string) {
+  public setLeader (userId: string) {
     this.options.leaderId = userId
   }
 
-  public getLeaderId() {
+  public getLeaderId () {
     return this.options.leaderId
   }
 
   /**
    * Get room name
    */
-  public getName() {
+  public getName () {
     return this.options.name;
   }
 
   /**
    * Get users present in the room
    */
-  public getUsers() {
+  public getUsers () {
     return this.users;
   }
 
   /**
    * Get formatted user to start a game
    */
-  public getUsersForGame() {
+  public getUsersForGame () {
     return this.getUsers().map(p => p.getData())
   }
 
-  public getUserFromId(id: string) {
+  public getUserFromId (id: string) {
     let user = this.users.find(u => u.getId() === id)
     if (!user) throw new Error(`User not found ${id}`)
     return user
@@ -107,9 +107,9 @@ export class Room {
 
   /**
    * @description Create a format sendable to front end client
-   * @returns array of rooms availables
+   * @returns all room informations
    */
-  public getData() {
+  public getData () {
     return {
       // name: this.getName(),
       id: this.getId(),
@@ -122,7 +122,8 @@ export class Room {
    * Add a user to room
    * @param userId User ID to add
    */
-  public addUser(user: User) {
+  public addUser (user: User) {
+
     if (this.isUserPresent(user.getId())) {
       throw new Error(`Try to add a user already present in room. UserID: ${user.getId()}, roomId: ${this.getId()}`);
     } else if (this.getUsers().length + 1 > this.options.maxPlayer) {
@@ -137,7 +138,7 @@ export class Room {
    * Remove a user from room
    * @param userId User ID to remove
    */
-  public removeUser(userId: string) {
+  public removeUser (userId: string) {
     if (!this.isUserPresent(userId)) {
       throw new Error(`Try to remove a user not present in room. UserID: ${userId}, roomId: ${this.getId()}`)
     } else {
@@ -150,7 +151,7 @@ export class Room {
    * @param userId User ID to check
    * @returns true if user present in room
    */
-  public isUserPresent(userId: string) {
+  public isUserPresent (userId: string) {
     return this.users.some((user) => user.getId() === userId);
   }
 
@@ -158,7 +159,7 @@ export class Room {
    * @param user User to check
    * @returns true if admin, else false
    */
-  public isUserAdmin(user: User) {
+  public isUserAdmin (user: User) {
     return this.getLeaderId() === user.getId()
   }
 }

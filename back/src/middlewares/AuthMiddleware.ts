@@ -6,7 +6,7 @@ import { Socket } from "socket.io";
  * It verify the token (generated with the api) and retreive the user ID (from the token)
  * User ID is injected in the socket (we can use socket.data.userId in further request to get user ID)
  */
-export default function AuthMiddleware(socket: Socket, next: any) {
+export default function AuthMiddleware (socket: Socket, next: any) {
   let t = socket.handshake.query.token
 
   if (t) {

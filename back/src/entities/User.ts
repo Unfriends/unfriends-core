@@ -14,9 +14,8 @@ export class User {
    * Get user data from API, using id
    * @returns empty Promise
    */
-  public async fetchData() {
-    // http://localhost:5001/api/user/infos/
-    return axios.get("https://unfriend-api.yohangastoud.fr/api/user/infos/" + this.id).then((res: any) => {
+  public async fetchData () {
+    return axios.get(`${process.env.API_URL}/api/user/infos/${this.id}`).then((res: any) => {
       this.data = res.data;
     }).catch(err => {
       console.error("API Unreachable. Set fake data");
@@ -24,31 +23,31 @@ export class User {
     })
   }
 
-  public setData(data: PlayerData) {
+  public setData (data: PlayerData) {
     this.data = data
   }
 
-  public getId() {
+  public getId () {
     return this.id;
   }
 
-  public setSocket(socket: Socket) {
+  public setSocket (socket: Socket) {
     this.socket = socket;
   }
 
-  public emit(event: string, params?: any) {
+  public emit (event: string, params?: any) {
     if (!this.socket)
       throw new Error(`User socket is not defined on (emit) event`)
     this.socket.emit(event, params)
   }
 
-  public on(event: string, callback: (...args: any[]) => void) {
+  public on (event: string, callback: (...args: any[]) => void) {
     if (!this.socket)
       throw new Error(`User socket is not defined on (on) event`)
     this.socket.on(event, callback)
   }
 
-  public getData() {
+  public getData () {
     if (!this.data)
       throw new Error("User data's not ready. Should not append")
     if (!this.socket)

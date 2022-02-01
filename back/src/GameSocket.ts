@@ -8,6 +8,7 @@ import { RefuseReason } from "./models/RefuseReason";
 import * as rdiff from 'recursive-diff'
 import { AbstractGame } from "@unfriends/game";
 import { Newable } from "./newable.type";
+import { ServerSocket } from "..";
 
 interface Message {
     user: any;
@@ -42,13 +43,13 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
 
     }
 
-    protected get game(): T {
+    protected get game (): T {
         if (this.gameInstance)
             return this.gameInstance
         throw new Error("Game object is undefined - game")
     }
 
-    protected setGame(gameType: Newable<T>) {
+    protected setGame (gameType: Newable<T>) {
         this.gameType = gameType
         this.gameInstance = new this.gameType()
     }
@@ -56,42 +57,42 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     /**
      * Create and replace game instance
      */
-    protected resetGame() {
+    protected resetGame () {
         if (!this.gameType) throw new Error("Game is not assignated  - resetGame")
         this.gameInstance = new this.gameType()
     }
 
-    protected getRoom() {
+    protected getRoom () {
         return this.room
     }
 
-    public getId() {
+    public getId () {
         return this.namespace.name;
     }
 
-    public setReconnectDelay(delay: number) {
+    public setReconnectDelay (delay: number) {
         this.reconnectDelay = delay;
     }
 
     /**
      * All custom event for the game
      */
-    abstract registerGameListeners(user: User): void;
+    abstract registerGameListeners (user: User): void;
     /**
      * All custom event for the lobby
      */
-    abstract registerLobbyListeners(user: User): void;
+    abstract registerLobbyListeners (user: User): void;
     /**
      * Called a user left a game permanently (and will not come back)
      */
-    abstract userLeftInGame(user: User): void;
+    abstract userLeftInGame (user: User): void;
     /**
      * Called when leader click on start button, afyer the game has been initialized
      */
-    abstract onStart(): void;
+    abstract onStart (): void;
     // abstract onFinish(): void;
 
-    private start() {
+    private start () {
         this.game.start(this.getRoom().getUsers().map(p => p.getData()))
         this.onStart()
     }
@@ -99,13 +100,13 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     /**
      * This function each time a user join or left the lobby. you can auto-set the game config here
      */
-    abstract onUserCountChanged(): void
+    abstract onUserCountChanged (): void
 
     /**
      * Setup a user socket when he join, or reconnect
      * @param user User to setup
      */
-    private setupUser(user: User) {
+    private setupUser (user: User) {
         this.registerListeners(user);
         // TODO register event only on converned state
         // if (this.room.isGameStarted())
@@ -123,13 +124,13 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     /**
      * When namespace is ready
      */
-    abstract onCreate(): void;
+    abstract onCreate (): void;
 
     /**
      * When a new user join the room
      * @param user New user
      */
-    private async onJoin(user: User) {
+    private async onJoin (user: User) {
         // console.log("First join");
 
         // user.getData()
@@ -141,8 +142,10 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
                     this.getRoom().changeOptions({ leaderId: user.getId() });
                 }
                 this.onUserCountChanged()
-            } catch (error) {
-                console.error(error);
+                // FIXME beurk
+                ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
+            } catch (error: any) {
+                console.error(error.message);
             }
         }
     }
@@ -150,7 +153,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     /**
      * When a user reconnect after a brutal leave
      */
-    private onReconnect(user: User): void {
+    private onReconnect (user: User): void {
         // console.log("Reconnect");
         this.setupUser(user);
     }
@@ -158,13 +161,13 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     /**
      * When a user reconnection seat expire
      */
-    private onReconnectExpired(user: User): void {
+    private onReconnectExpired (user: User): void {
         // this.removeAndBroadcastUser(user);
         try {
-            this.getRoom().removeUser(user.getId())
             if (this.getRoom().isGameStarted()) {
                 this.userLeftInGame(user);
             }
+            this.onLeave(user, LeaveReason.SeatExipred)
         } catch (error) {
             console.error(error);
         }
@@ -175,14 +178,14 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
      * @param user Left user
      * @param reason Left reason
      */
-    private onLeave(user: User, reason: LeaveReason): void {
-        // console.log('user left');
+    private onLeave (user: User, reason: LeaveReason): void {
         if (reason === LeaveReason.Brutal || this.getRoom().isGameStarted()) {
             this.waitForUserReconnection(user);
         } else {
             try {
                 this.getRoom().removeUser(user.getId())
                 this.onUserCountChanged()
+                ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
             } catch (error) {
                 console.error(error);
             }
@@ -194,7 +197,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
      * @param socket client socket
      * @param reason refuse reason
      */
-    public onRefuse(socket: Socket, reason: RefuseReason): void {
+    public onRefuse (socket: Socket, reason: RefuseReason): void {
         switch (reason) {
             case RefuseReason.ConnectedOnOtherRoom:
                 socket.emit("welcome", { error: "ConnectedOnOtherRoom" });
@@ -215,9 +218,9 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     /**
      * When the room is destroyed
      */
-    onDestroy(): void { }
+    onDestroy (): void { }
 
-    private autoSyncStates(interval: number) {
+    private autoSyncStates (interval: number) {
         // wait for game instance to be created
         setInterval(() => {
             if (this.getRoom().isGameStarted()) {
@@ -233,14 +236,16 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
 
 
 
-    private getAllPrivateInfos() {
+    private getAllPrivateInfos () {
         return this.game.getPlayersPrivateInfos()
     }
-    private getPrivateInfos(id: string) {
-        return this.game.getPlayerPrivateInfosFromId(id)
+    private getPrivateInfos (id: string) {
+        if (this.getRoom().isGameStarted())
+            return this.game.getPlayerPrivateInfosFromId(id)
+        return null
     }
 
-    private checkPrivatesInfos() {
+    private checkPrivatesInfos () {
         let infos = this.getAllPrivateInfos()
         if (!this.oldPrivateInfos) this.oldPrivateInfos = JSON.parse(JSON.stringify(this.getAllPrivateInfos()));
         if (!this.oldPrivateInfos) return
@@ -262,7 +267,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     }
 
 
-    private checkGameConfigUpdate() {
+    private checkGameConfigUpdate () {
         let state = this.getGameConfig()
 
         let diff = rdiff.getDiff(this.oldGameConfigState, state)
@@ -272,7 +277,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         }
     }
 
-    private checkGameStateUpdate() {
+    private checkGameStateUpdate () {
         let state = this.getGameState()
 
         let diff = rdiff.getDiff(this.oldGameState, state)
@@ -282,28 +287,31 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         }
     }
 
-    private checkLobbyUpdate() {
+    private checkLobbyUpdate () {
         let state = this.getLobbyState()
 
         let diff = rdiff.getDiff(this.oldLobbyState, state)
         if (diff.length > 0) {
             this.oldLobbyState = JSON.parse(JSON.stringify(state));
             this.broadcast("lobby:state:update", state);
+            // setTimeout(() => {
+            //     ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
+            // }, 500);
         }
     }
 
-    private getLobbyState() {
+    private getLobbyState () {
         return { messages: this.messages, ...this.getRoom().getData() }
     }
-    private getGameConfig() {
+    private getGameConfig () {
         return this.game?.getConfiguration()
     }
-    private getGameState() {
+    private getGameState () {
         return this.game?.getState()
     }
 
     // Setup
-    private registerListeners(user: User) {
+    private registerListeners (user: User) {
 
         // STATES SYNC
         user.on("game:state", (callback) => {
@@ -351,7 +359,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         });
     }
 
-    abstract canStart(): boolean;
+    abstract canStart (): boolean;
 
 
     // FUNCTIONS
@@ -376,7 +384,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     /**
      * Setup room event
      */
-    private setupSocketListeners() {
+    private setupSocketListeners () {
         this.namespace.on("connection", async (client: Socket) => {
             if (!client.data.refused) {
                 let userId: string = client.data.userId;
@@ -390,7 +398,11 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
                     user = new User(userId);
                     user.setSocket(client);
                     await user.fetchData()
-                    this.onJoin(user);
+                    try {
+                        this.onJoin(user);
+                    } catch (error: any) {
+                        console.log("Client refused", error.message);
+                    }
                 }
 
                 // console.log("Connect user " + userId + " in room " + this.getId());
@@ -412,11 +424,11 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     }
 
 
-    protected getUsers() {
+    protected getUsers () {
         return this.getRoom().getUsers()
     }
 
-    protected waitForUserReconnection(user: User) {
+    protected waitForUserReconnection (user: User) {
         let timeout = setTimeout(() => {
             this.getAndRemoveWaitingUser(user.getId());
             this.onReconnectExpired(user);
@@ -424,7 +436,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         this.waitingUsers.push({ user, timeout });
     }
 
-    private getAndRemoveWaitingUser(id: string): User {
+    private getAndRemoveWaitingUser (id: string): User {
         let seat = this.waitingUsers.filter((user) => user.user.getId() === id)[0];
         if (!seat) {
             throw new Error("Seat is undefined")
@@ -437,12 +449,12 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         return seat.user;
     }
 
-    public isWaitingForReconnection(id: string) {
+    public isWaitingForReconnection (id: string) {
         return this.waitingUsers.some((seat) => seat.user.getId() === id);
     }
 
     // Destroy namespace and free memory
-    public async destroyNamespace() {
+    public async destroyNamespace () {
         // TODO
         this.onDestroy();
     }
@@ -451,7 +463,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
      * Middlewares are used when user join the namespace
      * Functions are executed once for each user
      */
-    private setupMiddlewares() {
+    private setupMiddlewares () {
         // TODO
         // Is user auth ?
         this.namespace.use(AuthMiddleware);
@@ -467,7 +479,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
      * These datas will be passed to the client on "onStopGame" event
      * Leaderboard is also send as a supplement
      */
-    protected stopGame(data?: any) {
+    protected stopGame (data?: any) {
         this.getRoom().setGameStarted(false)
         this.broadcast('game:stop', { ...data, leaderboard: this.game.getLeaderboard() })
 
@@ -475,11 +487,11 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         this.resetGame()
     }
 
-    public broadcast(event: string, data?: any) {
+    public broadcast (event: string, data?: any) {
         this.namespace.emit(event, data);
     }
 
-    public emitToPlayer(id: string, event: string, data?: any) {
+    public emitToPlayer (id: string, event: string, data?: any) {
         this.room.getUserFromId(id).emit(event, data)
     }
 

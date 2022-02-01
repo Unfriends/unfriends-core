@@ -11,8 +11,8 @@ import { GameSocket } from "./GameSocket";
  * It also communicate with the matchmaker server
  */
 export class ServerSocket {
-    private rooms = new RoomsHandler()
-    protected isMatchmakerUp = false
+    private rooms = new RoomsHandler(this)
+    public static MATCHMAKER_SOCKET: null | Socket = null
 
     private server: Server
 
@@ -56,16 +56,16 @@ export class ServerSocket {
         // Listen for matchmaker
         this.server.of('/matchmaker').on("connection", (socket) => {
             // TODO add a middlewar, to verify if we're with a authorize matchmaker server
-            if (this.isMatchmakerUp) {
+            if (ServerSocket.MATCHMAKER_SOCKET) {
                 console.log("A matchmaker is already connected, but we can communicate with multiple instance, i guess");
             }
 
             console.log("Matchmaker is connected");
-            this.isMatchmakerUp = true
+            ServerSocket.MATCHMAKER_SOCKET = socket
 
             socket.on('disconnect', data => {
                 console.log("Matchmaker has disconnected:", data);
-                this.isMatchmakerUp = false
+                ServerSocket.MATCHMAKER_SOCKET = null
             })
 
             // On Events
@@ -86,17 +86,27 @@ export class ServerSocket {
 
             // Emit
 
-            socket.emit('getRooms', this.rooms.getPublicRooms())
+            this.broadcastRoomToMatchmaker()
         });
     }
 
-    protected createRoom(name: string, forceId?: string) {
+    public static EmitToMatchmaker (event: string, data?: any) {
+        ServerSocket.MATCHMAKER_SOCKET?.emit(event, data)
+    }
+
+    public broadcastRoomToMatchmaker () {
+        if (ServerSocket.MATCHMAKER_SOCKET) {
+            ServerSocket.EmitToMatchmaker('getRooms', this.rooms.getPublicRooms())
+        }
+    }
+
+    protected createRoom (name: string, forceId?: string) {
         let room = this.rooms.createRoom(name, forceId)
         room.attachSocket(new this.gameSocketType(this.server.of(room.getId()), room))
         return room
     }
 
-    public getUserRoom(userId: string) {
+    public getUserRoom (userId: string) {
         return this.rooms.getUserRoom(userId)
     }
 
