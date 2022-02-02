@@ -3,5 +3,6 @@ export enum LeaveReason {
   // Kick,
   Left,
   Unknow,
-  SeatExipred
+  SeatExipred,
+  Kicked
 }

@@ -179,7 +179,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
      * @param reason Left reason
      */
     private onLeave (user: User, reason: LeaveReason): void {
-        if (reason === LeaveReason.Brutal || this.getRoom().isGameStarted()) {
+        if ((reason === LeaveReason.Brutal || this.getRoom().isGameStarted()) && reason !== LeaveReason.Kicked) {
             this.waitForUserReconnection(user);
         } else {
             try {
@@ -341,7 +341,8 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         });
         user.on("lobby:kick", (userId: string) => {
             if (this.room.isUserAdmin(user)) {
-                this.room.removeUser(userId)
+                let user = this.getRoom().getUserFromId(userId)
+                this.onLeave(user, LeaveReason.Kicked)
             }
         });
         user.on("lobby:give-lead", (userId: string) => {
@@ -483,8 +484,9 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         this.getRoom().setGameStarted(false)
         this.broadcast('game:stop', { ...data, leaderboard: this.game.getLeaderboard() })
 
-        this.game.setConfiguration(this.game.getConfiguration())
+        let oldConfig = this.game.getConfiguration()
         this.resetGame()
+        this.game.setConfiguration(oldConfig)
     }
 
     public broadcast (event: string, data?: any) {
