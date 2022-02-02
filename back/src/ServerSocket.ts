@@ -16,16 +16,39 @@ export class ServerSocket {
 
     private server: Server
 
-    constructor(private gameSocketType: Newable<GameSocket<any>>, PORT: number, options?: { origin?: string[], debug?: boolean }) {
-        // Setup IO server
-        const httpServer = createServer();
+    constructor(private gameSocketType: Newable<GameSocket<any>>, PORT: number, options?: { origin?: string[], debug?: boolean }, io?: Server) {
         options = { origin: [], debug: false, ...options }
-        this.server = new Server(httpServer, {
-            cors: {
-                origin: options.origin,
-                credentials: true
-            }
-        });
+
+        // Setup IO server
+        if (!io) {
+            const httpServer = createServer();
+            this.server = new Server(httpServer, {
+                cors: {
+                    origin: options.origin,
+                    credentials: true
+                }
+            });
+            httpServer.listen(PORT);
+
+            httpServer.on('error', (e: any) => {
+                if (e.code === 'EADDRINUSE') {
+                    console.log(`Port ${PORT} in use, retrying...`);
+                    setTimeout(() => {
+                        httpServer.close();
+                        httpServer.listen(PORT);
+                    }, 5000);
+                } else {
+                    console.log(e);
+                }
+            });
+
+            httpServer.on('listening', () => {
+                console.log(`Server listening on ${PORT}`);
+            });
+        } else {
+            this.server = io
+        }
+
         if (options.debug) {
             let room = this.createRoom("debug", "debug")
             console.log("Room debug initialize. access it with /debug");
@@ -34,23 +57,7 @@ export class ServerSocket {
                 room.addUser(new Bot("bot-" + i))
             }
         }
-        httpServer.listen(PORT);
 
-        httpServer.on('error', (e: any) => {
-            if (e.code === 'EADDRINUSE') {
-                console.log(`Port ${PORT} in use, retrying...`);
-                setTimeout(() => {
-                    httpServer.close();
-                    httpServer.listen(PORT);
-                }, 5000);
-            } else {
-                console.log(e);
-            }
-        });
-
-        httpServer.on('listening', () => {
-            console.log(`Server listening on ${PORT}`);
-        });
 
 
         // Listen for matchmaker
