@@ -1,0 +1,38 @@
+{
+  "name": "@unfriends/front-module",
+  "version": "0.0.1",
+  "description": "Unfriends module for Nuxt front game",
+  "repository": "git://github.com/Unfriends/unfriends-core.git",
+  "license": "MIT",
+  "contributors": [{
+    "name": "Unfriends"
+  }],
+  "files": [
+    "lib"
+  ],
+  "main": "lib/module.js",
+  "scripts": {
+    "dev": "nuxt example",
+    "lint": "eslint --ext .js,.vue .",
+    "release": "standard-version && git push --follow-tags && npm publish"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "latest",
+    "@babel/preset-env": "latest",
+    "@commitlint/cli": "latest",
+    "@commitlint/config-conventional": "latest",
+    "@nuxtjs/eslint-config": "latest",
+    "@nuxtjs/module-test-utils": "latest",
+    "babel-eslint": "latest",
+    "babel-jest": "latest",
+    "eslint": "latest",
+    "husky": "latest",
+    "jest": "latest",
+    "nuxt-edge": "latest",
+    "standard-version": "latest"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
