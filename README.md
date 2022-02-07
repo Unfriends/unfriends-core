@@ -1,6 +1,6 @@
 # Unfriends Core
 
-This repo contains multiple packages, to help the developpement on [Unfriend](https://github.com/settings/tokens)
+This repo contains multiple packages, to help the developpement on [Unfriend](https://matchmaker.yohangastoud.fr)
 
 ## Install it
 
