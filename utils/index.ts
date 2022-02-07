@@ -1,1 +1,1 @@
-export * from "./src/PlayerData"
+export * from "./PlayerData"

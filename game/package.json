@@ -1,17 +1,19 @@
 {
   "name": "@unfriends/game",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "Necessaries tools to develop on Unfriends Games",
   "repository": {
     "type": "git",
     "url": "git://github.com/Unfriends/unfriends-core.git"
   },
   "publishConfig": {
-    "registry":"https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "prepare": "tsc"
+    "prepublish": "tsc"
   },
   "author": "Yohan Gastoud",
   "license": "ISC",

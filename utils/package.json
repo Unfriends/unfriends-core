@@ -1,22 +1,22 @@
 {
   "name": "@unfriends/utils",
-  "version": "0.0.2",
-  "description": "Necessaries tools to develop on Unfriend",
+  "version": "0.0.1",
+  "description": "Necessary tools to develop on Unfriend",
   "repository": {
     "type": "git",
-    "url": "git://github.com/Unfriends/unfriends-core.git"
+    "url": "git+ssh://git@github.com/Unfriends/unfriend-core.git"
   },
-  "publishConfig": {
-    "registry":"https://npm.pkg.github.com"
-  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "prepare": "tsc"
+    "prepublish": "tsc"
   },
   "author": "Yohan Gastoud",
   "license": "ISC",
   "devDependencies": {
     "ts-node": "^10.4.0",
+    "tsc": "^2.0.4",
     "typescript": "^4.5.4"
   }
 }
