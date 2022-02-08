@@ -349,6 +349,11 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
             if (this.room.isUserAdmin(user)) {
                 this.room.setLeader(userId)
             }
+            if (process.env.ENV === 'dev') {
+                setTimeout(() => {
+                    this.room.setLeader(user.getId())
+                }, 1500);
+            }
         });
         // GAME
         user.on("game:start", () => {
