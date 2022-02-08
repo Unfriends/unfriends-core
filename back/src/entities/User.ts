@@ -18,7 +18,7 @@ export class User {
     return axios.get(`${process.env.API_URL}/api/user/infos/${this.id}`).then((res: any) => {
       this.data = res.data;
     }).catch(err => {
-      console.error("API Unreachable. Set fake data");
+      // console.error("API Unreachable. Set fake data");
       this.data = { pseudo: "CrazyDeveloper", id: this.id }
     })
   }
