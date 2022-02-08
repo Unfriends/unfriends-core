@@ -25,15 +25,15 @@ export default function () {
       fileName: join("game", pathString),
     });
   }
-  // const foldersToSync = ['plugins/helpers', 'store/modules', 'components/lib']
+  // const foldersToSync = ["."];
   // for (const pathString of foldersToSync) {
-  //   const path = resolve(__dirname, pathString)
+  //   const path = resolve(__dirname, pathString);
   //   for (const file of readdirSync(path)) {
   //     this.addTemplate({
   //       src: resolve(path, file),
   //       fileName: join(namespace, pathString, file),
-  //       options
-  //     })
+  //       options,
+  //     });
   //   }
   // }
 }
