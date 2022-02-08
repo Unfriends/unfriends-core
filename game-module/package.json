@@ -1,6 +1,6 @@
 {
   "name": "@unfriends/front-module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Unfriends module for Nuxt front game",
   "repository": "git://github.com/Unfriends/unfriends-core.git",
   "license": "MIT",

@@ -22,6 +22,6 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
-    "@unfriends/utils": "0.0.1"
+    "@unfriends/utils": "latest"
   }
 }

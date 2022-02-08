@@ -12,7 +12,6 @@ import Vue from "vue";
 
 export default Vue.extend({
   middleware: ["auth"],
-  name: "GamePage",
   data() {
     return {
       socket: null,

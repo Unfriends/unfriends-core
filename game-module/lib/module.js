@@ -18,7 +18,7 @@ export default function () {
   //   }
   // })
 
-  const pluginsToSync = ["middleware/auth.js", "socket.js"];
+  const pluginsToSync = ["middleware/auth.js", "socket.js", "mixin.js"];
   for (const pathString of pluginsToSync) {
     this.addPlugin({
       src: resolve(__dirname, pathString),
