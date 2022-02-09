@@ -70,8 +70,9 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         return this.namespace.name;
     }
 
-    public setReconnectDelay (delay: number) {
-        this.reconnectDelay = delay;
+    // Set the reconnection delay, in second
+    public setReconnectDelay (seconds: number) {
+        this.reconnectDelay = seconds * 1000;
     }
 
     /**
@@ -159,36 +160,36 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     }
 
     /**
-     * When a user reconnection seat expire
-     */
-    private onReconnectExpired (user: User): void {
-        // this.removeAndBroadcastUser(user);
-        try {
-            if (this.getRoom().isGameStarted()) {
-                this.userLeftInGame(user);
-            }
-            this.onLeave(user, LeaveReason.SeatExipred)
-        } catch (error) {
-            console.error(error);
-        }
-    }
-
-    /**
      * When a user leave the room
      * @param user Left user
      * @param reason Left reason
      */
     private onLeave (user: User, reason: LeaveReason): void {
-        if ((reason === LeaveReason.Brutal || this.getRoom().isGameStarted()) && reason !== LeaveReason.Kicked) {
+        if (reason === LeaveReason.SeatExipred) {
+            this.removeUserFromRoom(user)
+        } else if ((reason === LeaveReason.Brutal || this.getRoom().isGameStarted()) && reason !== LeaveReason.Kicked) {
             this.waitForUserReconnection(user);
         } else {
-            try {
-                this.getRoom().removeUser(user.getId())
-                this.onUserCountChanged()
-                ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
-            } catch (error) {
-                console.error(error);
+            this.removeUserFromRoom(user)
+        }
+    }
+
+    private removeUserFromRoom (user: User) {
+        try {
+            if (this.getRoom().isGameStarted()) {
+                this.userLeftInGame(user);
             }
+            if (this.getRoom().getLeaderId() === user.getId()) {
+                let otheruser = this.getRoom().getUsers()[0]
+                if (otheruser) {
+                    this.getRoom().setLeader(otheruser.getId())
+                }
+            }
+            this.getRoom().removeUser(user.getId())
+            this.onUserCountChanged()
+            ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
+        } catch (error) {
+            console.error(error);
         }
     }
 
@@ -437,7 +438,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     protected waitForUserReconnection (user: User) {
         let timeout = setTimeout(() => {
             this.getAndRemoveWaitingUser(user.getId());
-            this.onReconnectExpired(user);
+            this.onLeave(user, LeaveReason.SeatExipred)
         }, this.reconnectDelay);
         this.waitingUsers.push({ user, timeout });
     }

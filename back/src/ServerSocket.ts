@@ -65,6 +65,7 @@ export class ServerSocket {
             // TODO add a middlewar, to verify if we're with a authorize matchmaker server
             if (ServerSocket.MATCHMAKER_SOCKET) {
                 console.log("A matchmaker is already connected, but we can communicate with multiple instance, i guess");
+                return
             }
 
             console.log("Matchmaker is connected");
