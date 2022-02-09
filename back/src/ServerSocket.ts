@@ -54,7 +54,11 @@ export class ServerSocket {
             console.log("Room debug initialize. access it with /debug");
 
             for (let i = 0; i < 4; i++) {
-                room.addUser(new Bot("bot-" + i))
+                try {
+                    room.addUser(new Bot("bot-" + i))
+                } catch (error) {
+
+                }
             }
         }
 
