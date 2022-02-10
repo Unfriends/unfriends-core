@@ -26,6 +26,8 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     private waitingUsers: { user: User; timeout: NodeJS.Timeout }[] = [];
 
     private messages: Message[] = [];
+
+    private autoSyncInterval: NodeJS.Timer
     private oldLobbyState: any
     private oldGameConfigState: any;
     private oldGameState: any;
@@ -39,8 +41,17 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         this.setupMiddlewares();
         this.setupSocketListeners();
         this.onCreate();
-        this.autoSyncStates(300)
+        this.autoSyncInterval = this.autoSyncStates(500)
 
+    }
+
+    /**
+     * 
+     * @param interval Number, in millisecond. Default is 500
+     */
+    public changeRefreshStateInterval (interval: number = 500) {
+        clearInterval(this.autoSyncInterval)
+        this.autoSyncInterval = this.autoSyncStates(interval)
     }
 
     protected get game (): T {
@@ -223,7 +234,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
 
     private autoSyncStates (interval: number) {
         // wait for game instance to be created
-        setInterval(() => {
+        return setInterval(() => {
             if (this.getRoom().isGameStarted()) {
                 this.checkGameStateUpdate()
                 this.checkPrivatesInfos()
