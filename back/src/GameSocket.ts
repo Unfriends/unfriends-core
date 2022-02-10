@@ -308,7 +308,9 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         return this.game?.getConfiguration()
     }
     private getGameState () {
-        return this.game?.getState()
+        let state = this.game?.getState()
+        state.players = this.game?.getPlayers().map(p => p.getPublicInfos())
+        return state
     }
 
     // Setup
