@@ -7,8 +7,6 @@ module.exports = {
     };
   },
   mounted() {
-    // Will set isConnectedInRoom & showLobby
-    console.log(this.$test);
     this.initSocket();
   },
   methods: {
@@ -50,6 +48,12 @@ module.exports = {
       this.socket.on("game:start", () => {
         this.showLobby = false;
         this.askStates();
+      });
+    },
+    onEvent(event, cb) {
+      this.socket.removeAllListeners(event);
+      this.socket.on(event, (data) => {
+        cb(data);
       });
     },
     askStates() {

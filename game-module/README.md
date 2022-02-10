@@ -6,19 +6,19 @@
 
 ## Setup
 
-1. Add `unfriends` dependency to your project
+1. Add `@unfriends/front-module` dependency to your project
 
 ```bash
-yarn add unfriends
+yarn add @unfriends/front-module
 ```
 
-2. Add `unfriends` to the `modules` section of `nuxt.config.js`
+2. Add `@unfriends/front-module` to the `modules` section of `nuxt.config.js`
 
 ```js
 {
   modules: [
     // Simple usage
-    'unfriends',
+    '@unfriends/front-module',
   ]
 }
 ```
