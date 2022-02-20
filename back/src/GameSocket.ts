@@ -8,7 +8,7 @@ import { RefuseReason } from "./models/RefuseReason";
 import * as rdiff from 'recursive-diff'
 import { AbstractGame } from "@unfriends/game";
 import { Newable } from "./newable.type";
-import { ServerSocket } from "..";
+import { ServerSocket } from "./ServerSocket";
 
 interface Message {
     user: any;
@@ -155,7 +155,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
                 }
                 this.onUserCountChanged()
                 // FIXME beurk
-                ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
+                // ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
             } catch (error: any) {
                 console.error(error.message);
             }
@@ -198,7 +198,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
             }
             this.getRoom().removeUser(user.getId())
             this.onUserCountChanged()
-            ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
+            // ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
         } catch (error) {
             console.error(error);
         }
@@ -476,6 +476,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     // Destroy namespace and free memory
     public async destroyNamespace () {
         // TODO
+        this.namespace.disconnectSockets()
         this.onDestroy();
     }
 

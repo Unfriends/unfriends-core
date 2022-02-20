@@ -1,9 +1,16 @@
 import { Namespace, Server, Socket } from "socket.io";
+import { io } from "socket.io-client";
 import { RoomsHandler } from "./RoomsHandler";
 import { createServer } from "http";
 import { Bot } from "./entities/Bot";
 import { Newable } from "./newable.type";
 import { GameSocket } from "./GameSocket";
+
+interface Config {
+    game: string;
+    color: string;
+    icon: string;
+}
 
 /**
  * Server socket is the global socket server.
@@ -12,19 +19,20 @@ import { GameSocket } from "./GameSocket";
  */
 export class ServerSocket {
     private rooms = new RoomsHandler(this)
-    public static MATCHMAKER_SOCKET: null | Socket = null
 
     private server: Server
+    private matchmakerServer
 
-    constructor(private gameSocketType: Newable<GameSocket<any>>, PORT: number, options?: { origin?: string[], debug?: boolean }, io?: Server) {
-        options = { origin: [], debug: false, ...options }
+    constructor(private gameSocketType: Newable<GameSocket<any>>, options: Config, ioServer?: Server) {
+        let front = process.env.APP_URL || "http://localhost:4000"
+        let PORT = process.env.SOCKET_PORT || '4001'
 
         // Setup IO server
-        if (!io) {
+        if (!ioServer) {
             const httpServer = createServer();
             this.server = new Server(httpServer, {
                 cors: {
-                    origin: options.origin,
+                    origin: [front],
                     credentials: true
                 }
             });
@@ -46,12 +54,12 @@ export class ServerSocket {
                 console.log(`Server listening on ${PORT}`);
             });
         } else {
-            this.server = io
+            this.server = ioServer
         }
 
-        if (options.debug) {
-            let room = this.createRoom("debug", "debug")
-            console.log("Room debug initialize. access it with /debug");
+        if (process.env.ENV === 'dev') {
+            let room = this.createRoom(`Debug room - ${options.game}`, `debug`)
+            console.log(`Room debug initialize. access it with /debug`);
 
             for (let i = 0; i < 4; i++) {
                 try {
@@ -62,54 +70,42 @@ export class ServerSocket {
             }
         }
 
+        // Connect to matchmaker
+        this.matchmakerServer = io(process.env.MATCHMAKER_SOCKET + '/game')
 
-
-        // Listen for matchmaker
-        this.server.of('/matchmaker').on("connection", (socket) => {
-            // TODO add a middlewar, to verify if we're with a authorize matchmaker server
-            if (ServerSocket.MATCHMAKER_SOCKET) {
-                console.log("A matchmaker is already connected, but we can communicate with multiple instance, i guess");
-                return
-            }
-
-            console.log("Matchmaker is connected");
-            ServerSocket.MATCHMAKER_SOCKET = socket
-
-            socket.on('disconnect', data => {
-                console.log("Matchmaker has disconnected:", data);
-                ServerSocket.MATCHMAKER_SOCKET = null
-            })
-
-            // On Events
-
-            socket.on('getRooms', (cb) => {
-                cb(this.rooms.getPublicRooms())
-            })
-
-            socket.on('createRoom', ({ name }, cb) => {
-                let room = this.createRoom(name)
-                cb(room.getId())
-            })
-
-            socket.on('removeRoom', (id, cb) => {
-                this.rooms.removeRoom(id)
-                cb(true)
-            })
-
-            // Emit
-
+        console.log("Trying to connect to matchmaker..");
+        this.matchmakerServer.on("connect", () => {
+            console.log("Connected to matchmaker");
+            this.matchmakerServer.emit('config', { ...options, front })
             this.broadcastRoomToMatchmaker()
         });
+
+
+        // On Events
+
+        this.matchmakerServer.on('getRooms', (cb) => {
+            cb(this.rooms.getPublicRooms())
+        })
+
+        this.matchmakerServer.on('createRoom', ({ name }, cb) => {
+            let room = this.createRoom(name)
+            cb(room.getId())
+        })
+
+        this.matchmakerServer.on('removeRoom', (id, cb) => {
+            this.rooms.removeRoom(id)
+            cb(true)
+        })
+
+
     }
 
-    public static EmitToMatchmaker (event: string, data?: any) {
-        ServerSocket.MATCHMAKER_SOCKET?.emit(event, data)
+    public emitToMatchmaker (event: string, data?: any) {
+        this.matchmakerServer.emit(event, data)
     }
 
     public broadcastRoomToMatchmaker () {
-        if (ServerSocket.MATCHMAKER_SOCKET) {
-            ServerSocket.EmitToMatchmaker('getRooms', this.rooms.getPublicRooms())
-        }
+        this.emitToMatchmaker('getRooms', this.rooms.getPublicRooms())
     }
 
     protected createRoom (name: string, forceId?: string) {

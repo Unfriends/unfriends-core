@@ -8,10 +8,8 @@
     "experimentalDecorators": true,
     "declaration": true
   },
-  "files": [
-    "index.ts"
-  ],
-  "include": [
-    "src/**/*.ts"
+  "include": ["*.ts", "src/**/*.ts"],
+  "exclude": [
+    "dist/**/*"
   ]
 }
