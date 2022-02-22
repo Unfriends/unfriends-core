@@ -235,12 +235,17 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     private autoSyncStates (interval: number) {
         // wait for game instance to be created
         return setInterval(() => {
-            if (this.getRoom().isGameStarted()) {
-                this.checkGameStateUpdate()
-                this.checkPrivatesInfos()
-            } else {
-                this.checkGameConfigUpdate()
-                this.checkLobbyUpdate()
+            try {
+                if (this.getRoom().isGameStarted()) {
+                    this.checkGameStateUpdate()
+                    this.checkPrivatesInfos()
+                } else {
+                    this.checkGameConfigUpdate()
+                    this.checkLobbyUpdate()
+                }
+            } catch (error) {
+                console.error("Error on sync state", error);
+
             }
         }, interval)
 
