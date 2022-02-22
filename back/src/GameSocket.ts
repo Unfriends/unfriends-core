@@ -320,7 +320,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     }
     private getGameState () {
         let state = this.game?.getState()
-        state.players = this.game?.getPlayers().map(p => p.getPublicInfos())
+        state.players = this.game?.getPlayers().map(p => { return { ...p.getPublicInfos(), data: p.getData() } })
         return state
     }
 

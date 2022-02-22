@@ -3,7 +3,6 @@ import { AbstractPlayer } from "./AbstractPlayer";
 export type Newable<T> = { new(...args: any[]): T; };
 export abstract class AbstractGame<Configuration, GameState, Player extends AbstractPlayer> {
     protected players: Player[] = []
-    protected gameState: GameState | false = false
 
     constructor(protected configuration: Configuration, protected playerType: Newable<Player>) {
         configuration = this.generateConfigAccordingToPlayers(2)
