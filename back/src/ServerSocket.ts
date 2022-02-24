@@ -1,10 +1,12 @@
 import { Namespace, Server, Socket } from "socket.io";
-import { io } from "socket.io-client";
+import { io, Socket as s } from "socket.io-client";
 import { RoomsHandler } from "./RoomsHandler";
 import { createServer } from "http";
 import { Bot } from "./entities/Bot";
 import { Newable } from "./newable.type";
 import { GameSocket } from "./GameSocket";
+import { DefaultEventsMap } from "@socket.io/component-emitter";
+import { Room } from "./entities/Room";
 
 interface Config {
     game: string;
@@ -18,10 +20,11 @@ interface Config {
  * It also communicate with the matchmaker server
  */
 export class ServerSocket {
+
     private rooms = new RoomsHandler(this)
 
     private server: Server
-    private matchmakerServer
+    static MatchmakerServer: s
 
     constructor(private gameSocketType: Newable<GameSocket<any>>, options: Config, ioServer?: Server) {
         let front = process.env.APP_URL || "http://localhost:4000"
@@ -71,37 +74,37 @@ export class ServerSocket {
         }
 
         // Connect to matchmaker
-        this.matchmakerServer = io(process.env.MATCHMAKER_SOCKET + '/game')
+        ServerSocket.MatchmakerServer = io(process.env.MATCHMAKER_SOCKET + '/game')
 
         console.log("Trying to connect to matchmaker..");
-        this.matchmakerServer.on("connect", () => {
+        ServerSocket.MatchmakerServer.on("connect", () => {
             console.log("Connected to matchmaker");
-            this.matchmakerServer.emit('config', { ...options, front })
+            ServerSocket.MatchmakerServer.emit('config', { ...options, front })
             this.broadcastRoomToMatchmaker()
         });
 
 
         // On Events
 
-        this.matchmakerServer.on('getRooms', (cb) => {
+        ServerSocket.MatchmakerServer.on('getRooms', (cb: any) => {
             cb(this.rooms.getPublicRooms())
         })
 
-        this.matchmakerServer.on('createRoom', ({ name }, cb) => {
+        ServerSocket.MatchmakerServer.on('createRoom', ({ name }: any, cb: any) => {
             let room = this.createRoom(name)
             cb(room.getId())
         })
 
-        this.matchmakerServer.on('removeRoom', (id, cb) => {
-            this.rooms.removeRoom(id)
-            cb(true)
-        })
+        // ServerSocket.MatchmakerServer.on('removeRoom', (id, cb) => {
+        //     this.rooms.removeRoom(id)
+        //     cb(true)
+        // })
 
 
     }
 
     public emitToMatchmaker (event: string, data?: any) {
-        this.matchmakerServer.emit(event, data)
+        ServerSocket.MatchmakerServer.emit(event, data)
     }
 
     public broadcastRoomToMatchmaker () {
@@ -116,6 +119,14 @@ export class ServerSocket {
 
     public getUserRoom (userId: string) {
         return this.rooms.getUserRoom(userId)
+    }
+
+    static updateRoom (room: Room) {
+        ServerSocket.MatchmakerServer.emit("updateRoom", room.getData())
+    }
+
+    static deleteRoom (room: Room) {
+        ServerSocket.MatchmakerServer.emit("deleteRoom", room.getData())
     }
 
     // public removeRoom(id: string) {

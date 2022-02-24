@@ -154,8 +154,6 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
                     this.getRoom().changeOptions({ leaderId: user.getId() });
                 }
                 this.onUserCountChanged()
-                // FIXME beurk
-                // ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
             } catch (error: any) {
                 console.error(error.message);
             }
@@ -191,14 +189,19 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
                 this.userLeftInGame(user);
             }
             if (this.getRoom().getLeaderId() === user.getId()) {
+                this.getRoom().removeUser(user.getId())
                 let otheruser = this.getRoom().getUsers()[0]
                 if (otheruser) {
                     this.getRoom().setLeader(otheruser.getId())
                 }
+            } else {
+                this.getRoom().removeUser(user.getId())
             }
-            this.getRoom().removeUser(user.getId())
-            this.onUserCountChanged()
-            // ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
+            if (this.getRoom().getUsers().length === 0) {
+                ServerSocket.deleteRoom(this.getRoom())
+            } else {
+                this.onUserCountChanged()
+            }
         } catch (error) {
             console.error(error);
         }
@@ -311,9 +314,7 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         if (diff.length > 0) {
             this.oldLobbyState = JSON.parse(JSON.stringify(state));
             this.broadcast("lobby:state:update", state);
-            // setTimeout(() => {
-            //     ServerSocket.EmitToMatchmaker("updateRoom", this.getRoom().getData())
-            // }, 500);
+            ServerSocket.updateRoom(this.getRoom())
         }
     }
 
