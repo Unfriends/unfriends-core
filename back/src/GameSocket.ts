@@ -314,7 +314,9 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         if (diff.length > 0) {
             this.oldLobbyState = JSON.parse(JSON.stringify(state));
             this.broadcast("lobby:state:update", state);
-            ServerSocket.updateRoom(this.getRoom())
+            if (state.users.length !== 0) {
+                ServerSocket.updateRoom(this.getRoom())
+            }
         }
     }
 
