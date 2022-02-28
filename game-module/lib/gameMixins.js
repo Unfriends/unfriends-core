@@ -14,6 +14,18 @@ module.exports = {
       this.isConnectedInRoom = true;
       this.showLobby = !isGameStarted;
     },
+    onNotification(notif) {
+      console.log(
+        "Received notif but method onNotification(notif) is not implemented",
+        notif
+      );
+    },
+    onSuccess(success) {
+      console.log(
+        "Received success but method onNotification(notif) is not implemented",
+        success
+      );
+    },
     initSocket() {
       if (!process.client) {
         return;
@@ -44,6 +56,15 @@ module.exports = {
       });
       this.socket.on("game:private-infos:update", (state) => {
         this.$store.commit("game/setPrivateInfos", state);
+      });
+      this.socket.on("unfriend:notification", (notif) => {
+        this.onNotification(notif);
+      });
+      this.socket.on("unfriend:success", async (key) => {
+        let req = await this.$axios(
+          `${this.$config.apiUrl}/api/success/${key}`
+        );
+        this.onSuccess(req.data);
       });
       this.socket.on("game:start", () => {
         this.showLobby = false;
