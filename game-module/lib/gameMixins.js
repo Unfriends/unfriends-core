@@ -14,6 +14,12 @@ module.exports = {
       this.isConnectedInRoom = true;
       this.showLobby = !isGameStarted;
     },
+    onRefuse(error) {
+      console.error(error);
+      setTimeout(() => {
+        location.replace(this.$config.matchmakerUrl);
+      }, 2000);
+    },
     onNotification(notif) {
       console.log(
         "Received notif but method onNotification(notif) is not implemented",
@@ -39,11 +45,15 @@ module.exports = {
       });
       let connectTimeout = setTimeout(() => {
         location.replace(this.$config.matchmakerUrl);
-      }, 10000);
+      }, 5000);
       this.socket.once("hello", (isStarted) => {
+        if (isStarted.error) {
+          this.onRefuse(isStarted.error);
+        } else {
+          this.onHello(isStarted);
+          this.askStates();
+        }
         clearTimeout(connectTimeout);
-        this.onHello(isStarted);
-        this.askStates();
       });
       this.socket.on("lobby:state:update", (state) => {
         this.$store.commit("game/setLobbyState", state);
