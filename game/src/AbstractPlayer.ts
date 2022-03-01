@@ -29,12 +29,9 @@ export abstract class AbstractPlayer {
         try {
             //Check if user has success
             let checkReq = await axios.get(`${process.env.API_URL}/api/user/${this.getId()}/success/${key}`)
-            console.log(checkReq.data);
-            
             if(checkReq.data == true){
                 return false
             }
-
             await axios.post(`${process.env.API_URL}/api/user/${this.getId()}/success/${key}`, {}, {headers: {
                 'apiKey': process.env.API_PRIVILEGED_KEY || 'API_PRIVILEGED_KEY env isn\'t set'
             }})
