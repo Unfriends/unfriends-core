@@ -47,6 +47,18 @@ export class User {
     this.socket.on(event, callback)
   }
 
+  public sendNotification (notif: any) {
+    if (!this.socket)
+      throw new Error(`User socket is not defined on (sendNotification) event`)
+    this.socket.emit('unfriend:notification', notif)
+  }
+
+  public sendSuccess (key: string) {
+    if (!this.socket)
+      throw new Error(`User socket is not defined on (sendSuccess) event`)
+    this.socket.emit('unfriend:success', key)
+  }
+
   public getData () {
     if (!this.data)
       throw new Error("User data's not ready. Should not append")
