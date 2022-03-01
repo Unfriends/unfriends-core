@@ -10,7 +10,7 @@ export default function AuthMiddleware (socket: Socket, next: any) {
   let t = socket.handshake.query.token
 
   if (t) {
-    // FIXME verify signature
+    // FIXME verify signature, unless we're in dev env
     let token: { id: string; iat: number; exp: number } = jwtDecode(t as string)
     const timeDiff = token.exp - token.iat;
     if (timeDiff <= 0) {

@@ -215,13 +215,13 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
     public onRefuse (socket: Socket, reason: RefuseReason): void {
         switch (reason) {
             case RefuseReason.ConnectedOnOtherRoom:
-                socket.emit("welcome", { error: "ConnectedOnOtherRoom" });
+                socket.emit("hello", { error: "ConnectedOnOtherRoom" });
                 break;
             case RefuseReason.ConnectedInThisRoomOnOtherTab:
-                socket.emit("welcome", { error: "ConnectedInThisRoomOnOtherTab" });
+                socket.emit("hello", { error: "ConnectedInThisRoomOnOtherTab" });
                 break;
             default:
-                socket.emit("welcome", { error: `UnknowError ${reason}` });
+                socket.emit("hello", { error: `UnknowError ${reason}` });
                 break;
         }
 
@@ -498,9 +498,9 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         this.namespace.use(AuthMiddleware);
 
         // Is user already in room ?
-        // this.namespace.use((socket: Socket, next: any) => {
-        //   InRoomMiddleware(socket, next, this);
-        // });
+        this.namespace.use((socket: Socket, next: any) => {
+            InRoomMiddleware(socket, next, this);
+        });
     }
 
     /**
