@@ -95,10 +95,10 @@ export class ServerSocket {
             cb(room.getId())
         })
 
-        // ServerSocket.MatchmakerServer.on('removeRoom', (id, cb) => {
-        //     this.rooms.removeRoom(id)
-        //     cb(true)
-        // })
+        ServerSocket.MatchmakerServer.on('removeRoom', (id, cb) => {
+            this.rooms.removeRoom(id)
+            cb(true)
+        })
 
 
     }
