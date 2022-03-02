@@ -20,6 +20,10 @@ export default function InRoomMiddleware (
   if (isWaited) {
     next();
   } else {
+    if ((gameSocket as any).room.gameStarted) {
+      (gameSocket as any).onRefuse(socket, RefuseReason.RoomStarted)
+      refused = true
+    }
     let isPresent = (gameSocket as any).room.users.some((p: AbstractPlayer) => p.getId() === userId)
     if (isPresent) {
       (gameSocket as any).onRefuse(socket, RefuseReason.ConnectedInThisRoomOnOtherTab)
