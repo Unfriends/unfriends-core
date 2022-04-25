@@ -1,6 +1,6 @@
 {
   "name": "@unfriends/back",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Necessaries tools to develop on Unfriend Socket Server",
   "repository": {
     "type": "git",

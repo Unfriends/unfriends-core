@@ -43,6 +43,9 @@ export abstract class GameSocket<T extends AbstractGame<any, any, any>> {
         this.onCreate();
         this.autoSyncInterval = this.autoSyncStates(500)
 
+        this.on('success', ({player, success}: {player: string, success: string}) => {
+            this.room.getUserFromId(player).sendSuccess(success)
+        })
     }
 
     /**
