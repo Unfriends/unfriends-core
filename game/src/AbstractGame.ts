@@ -1,10 +1,12 @@
 import { PlayerData } from "@unfriends/utils";
+import { EventEmitter } from "stream";
 import { AbstractPlayer } from "./AbstractPlayer";
 export type Newable<T> = { new(...args: any[]): T; };
-export abstract class AbstractGame<Configuration, GameState, Player extends AbstractPlayer> {
+export abstract class AbstractGame<Configuration, GameState, Player extends AbstractPlayer> extends EventEmitter {
     protected players: Player[] = []
 
     constructor(protected configuration: Configuration, protected playerType: Newable<Player>) {
+        super()
         configuration = this.generateConfigAccordingToPlayers(2)
     }
 
@@ -58,6 +60,15 @@ export abstract class AbstractGame<Configuration, GameState, Player extends Abst
      */
     public getPlayersInfos () {
         return this.players.map(p => { return { id: p.getId(), infos: p.getPublicInfos() } })
+    }
+
+    protected async giveSuccess(player: AbstractPlayer, key: string){
+        if(await player.giveSuccess(key)){
+            this.emit('success', {player: player.getId(), success: key})
+            return true
+        } else {
+            return false
+        }
     }
 
     /**
